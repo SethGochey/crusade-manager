@@ -1,0 +1,1520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Crusade Manager — Warhammer 40K</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #C9963A;
+    --gold-light: #E8BA5A;
+    --gold-dark: #8A6420;
+    --blood: #8B1A1A;
+    --blood-dark: #5A0A0A;
+    --parchment: #1A1410;
+    --surface: #12100D;
+    --surface2: #1E1A15;
+    --surface3: #261F18;
+    --surface4: #2E2620;
+    --text: #D4C4A0;
+    --text-muted: #8A7A5A;
+    --text-dim: #5A4A2A;
+    --border: #3A2E20;
+    --border-gold: #6A5030;
+    --accent: #C9963A;
+    --danger: #8B1A1A;
+    --success: #2A5A2A;
+    --success-light: #4A8A4A;
+    --info: #1A3A5A;
+    --info-light: #3A6A9A;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Crimson Pro', Georgia, serif;
+    background: var(--parchment);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 16px;
+    line-height: 1.6;
+    background-image:
+      radial-gradient(ellipse at 20% 50%, rgba(139,26,26,0.04) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 20%, rgba(201,150,58,0.04) 0%, transparent 60%);
+  }
+  h1,h2,h3,h4 { font-family: 'Cinzel', serif; letter-spacing: 0.05em; }
+
+  /* Layout */
+  #app { display: flex; flex-direction: column; min-height: 100vh; }
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border-gold);
+    padding: 12px 24px;
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 2px 20px rgba(0,0,0,0.5);
+  }
+  .header-title { display: flex; align-items: center; gap: 12px; }
+  .skull-icon { font-size: 20px; color: var(--gold); }
+  header h1 { font-size: 18px; color: var(--gold); }
+  header .crusade-name { font-family: 'Crimson Pro', serif; color: var(--text-muted); font-size: 14px; margin-top: 2px; }
+
+  nav { display: flex; gap: 4px; }
+  nav button {
+    background: none; border: 1px solid transparent; color: var(--text-muted);
+    padding: 6px 14px; border-radius: 4px; cursor: pointer;
+    font-family: 'Cinzel', serif; font-size: 12px; letter-spacing: 0.05em;
+    transition: all 0.2s;
+  }
+  nav button:hover { color: var(--gold); border-color: var(--border-gold); }
+  nav button.active { color: var(--gold); border-color: var(--gold); background: rgba(201,150,58,0.08); }
+
+  main { flex: 1; padding: 24px; max-width: 1400px; margin: 0 auto; width: 100%; }
+
+  /* Views */
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* Cards */
+  .card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  .card-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 16px; padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .card-title { font-size: 14px; color: var(--gold); letter-spacing: 0.08em; }
+
+  /* Buttons */
+  .btn {
+    padding: 8px 16px; border-radius: 4px; border: 1px solid var(--border-gold);
+    cursor: pointer; font-family: 'Cinzel', serif; font-size: 12px;
+    letter-spacing: 0.05em; transition: all 0.2s; color: var(--gold);
+    background: rgba(201,150,58,0.05);
+  }
+  .btn:hover { background: rgba(201,150,58,0.15); border-color: var(--gold); }
+  .btn-primary { background: var(--gold); color: var(--parchment); border-color: var(--gold); }
+  .btn-primary:hover { background: var(--gold-light); }
+  .btn-danger { border-color: var(--blood); color: #E04A4A; background: rgba(139,26,26,0.1); }
+  .btn-danger:hover { background: rgba(139,26,26,0.25); }
+  .btn-sm { padding: 4px 10px; font-size: 11px; }
+  .btn-ghost { border-color: transparent; background: none; color: var(--text-muted); }
+  .btn-ghost:hover { color: var(--text); background: rgba(255,255,255,0.05); }
+
+  /* Forms */
+  .form-group { margin-bottom: 14px; }
+  label { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px; font-family: 'Cinzel', serif; letter-spacing: 0.05em; }
+  input, select, textarea {
+    width: 100%; padding: 8px 12px; background: var(--surface3);
+    border: 1px solid var(--border); border-radius: 4px;
+    color: var(--text); font-family: 'Crimson Pro', serif; font-size: 15px;
+    transition: border-color 0.2s;
+  }
+  input:focus, select:focus { outline: none; border-color: var(--gold); }
+  select option { background: var(--surface3); }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+
+  /* Grid layouts */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { font-family: 'Cinzel', serif; font-size: 11px; color: var(--gold); letter-spacing: 0.08em; padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--border-gold); }
+  td { padding: 8px 12px; border-bottom: 1px solid var(--border); color: var(--text); }
+  tr:hover td { background: rgba(201,150,58,0.04); }
+  .td-center { text-align: center; }
+  .td-right { text-align: right; }
+
+  /* Stats pills */
+  .stat-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 3px 10px; border-radius: 20px; font-size: 12px;
+    font-family: 'Cinzel', serif;
+  }
+  .pill-win { background: rgba(42,90,42,0.3); color: #6ABF6A; border: 1px solid rgba(74,138,74,0.4); }
+  .pill-loss { background: rgba(139,26,26,0.3); color: #E06060; border: 1px solid rgba(139,26,26,0.4); }
+  .pill-gold { background: rgba(201,150,58,0.15); color: var(--gold); border: 1px solid var(--border-gold); }
+
+  /* Team colors */
+  .team-badge {
+    display: inline-block; width: 10px; height: 10px;
+    border-radius: 50%; margin-right: 6px; flex-shrink: 0;
+  }
+
+  /* Phase indicator */
+  .phase-bar { display: flex; gap: 8px; margin-bottom: 24px; }
+  .phase-seg {
+    flex: 1; padding: 8px 16px; border-radius: 4px;
+    border: 1px solid var(--border); background: var(--surface2);
+    text-align: center; font-family: 'Cinzel', serif; font-size: 11px;
+    color: var(--text-muted); transition: all 0.2s;
+  }
+  .phase-seg.current { border-color: var(--gold); color: var(--gold); background: rgba(201,150,58,0.08); }
+  .phase-seg.complete { border-color: var(--border-gold); color: var(--text-dim); }
+  .phase-seg .phase-winner { font-size: 10px; color: var(--success-light); margin-top: 2px; }
+
+  /* Match result tags */
+  .result-win { color: #6ABF6A; font-weight: 600; }
+  .result-loss { color: #E06060; font-weight: 600; }
+  .result-draw { color: var(--gold); }
+
+  /* Modal */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+    z-index: 200; align-items: center; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface2); border: 1px solid var(--border-gold);
+    border-radius: 8px; padding: 24px; max-width: 600px; width: 90%;
+    max-height: 85vh; overflow-y: auto;
+  }
+  .modal h3 { color: var(--gold); margin-bottom: 20px; font-size: 16px; }
+  .modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); }
+
+  /* Pairing cards */
+  .pairing-card {
+    background: var(--surface3); border: 1px solid var(--border);
+    border-radius: 6px; padding: 16px; margin-bottom: 12px;
+    display: flex; align-items: center; gap: 16px;
+  }
+  .pairing-player { flex: 1; }
+  .pairing-vs { color: var(--gold); font-family: 'Cinzel', serif; font-size: 18px; padding: 0 8px; }
+  .pairing-path { font-size: 11px; color: var(--text-muted); font-family: 'Cinzel', serif; margin-top: 4px; }
+
+  /* Overview stats */
+  .stat-box {
+    background: var(--surface3); border: 1px solid var(--border);
+    border-radius: 6px; padding: 14px; text-align: center;
+  }
+  .stat-box .val { font-size: 28px; font-family: 'Cinzel', serif; color: var(--gold); }
+  .stat-box .lbl { font-size: 11px; color: var(--text-muted); font-family: 'Cinzel', serif; letter-spacing: 0.08em; margin-top: 2px; }
+
+  /* Setup wizard */
+  .wizard-step { display: none; }
+  .wizard-step.active { display: block; }
+  .setup-hero { text-align: center; padding: 40px 20px; }
+  .setup-hero h1 { font-size: 36px; color: var(--gold); margin-bottom: 8px; }
+  .setup-hero p { color: var(--text-muted); font-size: 18px; }
+
+  /* Ornament */
+  .ornament { text-align: center; color: var(--text-dim); font-size: 16px; margin: 16px 0; letter-spacing: 8px; }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+    .form-row, .form-row-3 { grid-template-columns: 1fr; }
+    nav button { padding: 6px 8px; font-size: 10px; }
+  }
+
+  /* Tooltips */
+  [title] { cursor: help; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--surface); }
+  ::-webkit-scrollbar-thumb { background: var(--border-gold); border-radius: 3px; }
+
+  /* Alert */
+  .alert { padding: 10px 14px; border-radius: 4px; margin-bottom: 12px; font-size: 14px; }
+  .alert-info { background: rgba(26,58,90,0.4); border: 1px solid rgba(58,106,154,0.5); color: #7AAAD0; }
+  .alert-warn { background: rgba(90,74,26,0.4); border: 1px solid var(--border-gold); color: var(--gold-light); }
+  .alert-success { background: rgba(42,90,42,0.3); border: 1px solid rgba(74,138,74,0.4); color: #6ABF6A; }
+
+  .empty-state { text-align: center; padding: 40px; color: var(--text-dim); font-style: italic; }
+
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 11px; font-family: 'Cinzel', serif; }
+  .tag-phase { background: rgba(201,150,58,0.1); color: var(--gold); border: 1px solid var(--border-gold); }
+
+  #toast {
+    position: fixed; bottom: 24px; right: 24px; z-index: 300;
+    background: var(--surface4); border: 1px solid var(--border-gold);
+    padding: 10px 20px; border-radius: 6px; color: var(--gold);
+    font-family: 'Cinzel', serif; font-size: 13px;
+    transform: translateY(100px); opacity: 0; transition: all 0.3s;
+  }
+  #toast.show { transform: translateY(0); opacity: 1; }
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- Setup Screen -->
+  <div id="setup-screen">
+    <div style="max-width:600px;margin:0 auto;padding:40px 24px;">
+      <div class="setup-hero">
+        <div style="font-size:48px;color:var(--gold);margin-bottom:16px;">☩</div>
+        <h1>Crusade Manager</h1>
+        <p>Track your Warhammer 40,000 Crusade campaign</p>
+      </div>
+      <div class="ornament">✦ ✦ ✦</div>
+
+      <div class="card">
+        <div class="card-header"><span class="card-title">Begin New Crusade</span></div>
+
+        <div class="form-group">
+          <label>Crusade Name</label>
+          <input id="setup-name" type="text" placeholder="e.g. The Siege of Damocles" value="The Siege of Damocles">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Number of Teams</label>
+            <select id="setup-teams">
+              <option value="2" selected>2 Teams</option>
+              <option value="3">3 Teams</option>
+              <option value="4">4 Teams</option>
+              <option value="5">5 Teams</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Pairing Method</label>
+            <select id="setup-pairing" onchange="updateSetupDefaults()">
+              <option value="roundrobin">Round Robin (default)</option>
+              <option value="winpath">Win Path</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="background:var(--surface3);border-radius:6px;padding:14px;margin-bottom:14px;" id="setup-players-section">
+          <div style="font-size:11px;color:var(--gold);font-family:'Cinzel',serif;letter-spacing:0.08em;margin-bottom:10px;">PLAYER COUNT (sets default rounds)</div>
+          <div class="form-row">
+            <div class="form-group" style="margin-bottom:0;">
+              <label>Number of Players</label>
+              <input id="setup-playercount" type="number" min="2" max="64" value="8" oninput="updateSetupDefaults()">
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+              <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px;font-family:'Cinzel',serif;letter-spacing:0.05em;">CALCULATED DEFAULT</div>
+              <div id="setup-rounds-preview" style="font-size:22px;font-family:'Cinzel',serif;color:var(--gold);padding-top:4px;">—</div>
+              <div style="font-size:11px;color:var(--text-dim);">total rounds / <span id="setup-rpp-preview">—</span> per phase</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row-3">
+          <div class="form-group">
+            <label>Rounds Per Phase <span style="color:var(--text-dim);font-size:10px;">(override)</span></label>
+            <input id="setup-rpp" type="number" min="1" max="40" value="" placeholder="Auto">
+            <div style="font-size:11px;color:var(--text-dim);margin-top:4px;">Leave blank to use default</div>
+          </div>
+          <div class="form-group">
+            <label>Allow Rematches?</label>
+            <select id="setup-rematch">
+              <option value="0">No — avoid rematches</option>
+              <option value="1">Yes — allow rematches</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Number of Phases</label>
+            <select id="setup-phases" onchange="updateSetupDefaults()">
+              <option value="3" selected>3 Phases</option>
+              <option value="2">2 Phases</option>
+              <option value="4">4 Phases</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="team-name-inputs" style="margin-top:8px;"></div>
+
+        <div class="ornament" style="margin:20px 0 16px;">✦</div>
+        <button class="btn btn-primary" style="width:100%;padding:12px;" onclick="beginCrusade()">
+          ☩ &nbsp; Begin the Crusade
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main App -->
+  <div id="main-app" style="display:none;">
+    <header>
+      <div class="header-title">
+        <div class="skull-icon">☩</div>
+        <div>
+          <h1 id="header-title">Crusade Manager</h1>
+          <div class="crusade-name" id="header-sub"></div>
+        </div>
+      </div>
+      <nav>
+        <button class="active" onclick="showView('overview')">Overview</button>
+        <button onclick="showView('teams')">Teams & Rosters</button>
+        <button onclick="showView('matches')">Matches</button>
+        <button onclick="showView('standings')">Standings</button>
+        <button onclick="showView('pairings')">Pairings</button>
+        <button onclick="showView('settings')">Settings</button>
+      </nav>
+    </header>
+
+    <main>
+      <!-- OVERVIEW -->
+      <div id="view-overview" class="view active">
+        <div id="phase-bar" class="phase-bar"></div>
+        <div class="grid-4" id="overview-stats" style="margin-bottom:24px;"></div>
+        <div class="grid-2">
+          <div>
+            <div class="card">
+              <div class="card-header"><span class="card-title">Team Standings</span></div>
+              <table id="overview-standings-table"></table>
+            </div>
+          </div>
+          <div>
+            <div class="card">
+              <div class="card-header"><span class="card-title">Recent Matches</span></div>
+              <div id="recent-matches"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TEAMS -->
+      <div id="view-teams" class="view">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <h2 style="font-size:16px;color:var(--gold);">Teams &amp; Rosters</h2>
+          <button class="btn btn-sm" onclick="openAddPlayerModal()">+ Add Player</button>
+        </div>
+        <div id="teams-grid"></div>
+      </div>
+
+      <!-- MATCHES -->
+      <div id="view-matches" class="view">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <h2 style="font-size:16px;color:var(--gold);">Match Records</h2>
+          <button class="btn btn-sm" onclick="openRecordMatchModal()">+ Record Match</button>
+        </div>
+        <div id="matches-filter" style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+          <select id="filter-round" onchange="renderMatches()" style="width:auto;padding:6px 10px;font-size:13px;">
+            <option value="">All Rounds</option>
+          </select>
+          <select id="filter-phase" onchange="renderMatches()" style="width:auto;padding:6px 10px;font-size:13px;">
+            <option value="">All Phases</option>
+          </select>
+          <select id="filter-player" onchange="renderMatches()" style="width:auto;padding:6px 10px;font-size:13px;">
+            <option value="">All Players</option>
+          </select>
+        </div>
+        <div class="card">
+          <table>
+            <thead><tr>
+              <th>Round</th><th>Phase</th>
+              <th>Player 1</th><th>VP</th><th>SP</th>
+              <th>Result</th>
+              <th>SP</th><th>VP</th><th>Player 2</th>
+              <th>Actions</th>
+            </tr></thead>
+            <tbody id="matches-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- STANDINGS -->
+      <div id="view-standings" class="view">
+        <div id="standings-phases"></div>
+        <div class="card" style="margin-top:16px;">
+          <div class="card-header"><span class="card-title">Individual Player Standings</span></div>
+          <table>
+            <thead><tr>
+              <th>Player</th><th>Team</th><th>W</th><th>L</th><th>Win%</th>
+              <th>VP For</th><th>VP Against</th><th>OGW%</th><th>Win Path</th>
+            </tr></thead>
+            <tbody id="standings-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- PAIRINGS -->
+      <div id="view-pairings" class="view">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <div>
+            <h2 style="font-size:16px;color:var(--gold);">Generate Pairings</h2>
+            <div style="font-size:13px;color:var(--text-muted);margin-top:4px;">Round <span id="next-round-num">1</span></div>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-sm" onclick="generatePairings()">Generate Next Round</button>
+            <button class="btn btn-sm btn-ghost" onclick="lockPairings()">Lock &amp; Advance Round</button>
+          </div>
+        </div>
+        <div id="pairings-method-info" class="alert alert-info" style="margin-bottom:16px;"></div>
+        <div id="pairings-container"></div>
+        <div id="pairings-byes"></div>
+      </div>
+
+      <!-- SETTINGS -->
+      <div id="view-settings" class="view">
+        <div class="grid-2">
+          <div>
+            <div class="card">
+              <div class="card-header"><span class="card-title">Crusade Settings</span></div>
+              <div class="form-group">
+                <label>Crusade Name</label>
+                <input id="settings-name" type="text" oninput="updateSettings()">
+              </div>
+              <div class="form-group">
+                <label>Pairing Method</label>
+                <select id="settings-pairing" onchange="updateSettings()">
+                  <option value="roundrobin">Round Robin</option>
+                  <option value="winpath">Win Path</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Allow Rematches</label>
+                <select id="settings-rematch" onchange="updateSettings()">
+                  <option value="0">No</option>
+                  <option value="1">Yes</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Rounds Per Phase</label>
+                <input id="settings-rpp" type="number" min="1" oninput="updateSettings()">
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="card">
+              <div class="card-header"><span class="card-title">Data Management</span></div>
+              <p style="color:var(--text-muted);font-size:14px;margin-bottom:16px;">Export or import your crusade data as JSON.</p>
+              <div style="display:flex;flex-direction:column;gap:8px;">
+                <button class="btn" onclick="exportData()">Export Crusade Data</button>
+                <button class="btn" onclick="document.getElementById('import-file').click()">Import Crusade Data</button>
+                <input id="import-file" type="file" accept=".json" style="display:none" onchange="importData(event)">
+              </div>
+              <div class="ornament" style="margin:20px 0;">✦</div>
+              <button class="btn btn-danger" style="width:100%;" onclick="resetCrusade()">Reset — Start New Crusade</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- Modals -->
+<div class="modal-overlay" id="modal-add-player">
+  <div class="modal">
+    <h3>Add Player</h3>
+    <div class="form-group">
+      <label>Player Name</label>
+      <input id="ap-name" type="text" placeholder="Sgt. Merrick">
+    </div>
+    <div class="form-group">
+      <label>Faction / Army</label>
+      <input id="ap-faction" type="text" placeholder="Space Marines — Ultramarines">
+    </div>
+    <div class="form-group">
+      <label>Assign to Team</label>
+      <select id="ap-team"></select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-add-player')">Cancel</button>
+      <button class="btn btn-primary" onclick="addPlayer()">Add Player</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-record-match">
+  <div class="modal">
+    <h3>Record Match Result</h3>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Round</label>
+        <input id="rm-round" type="number" min="1" value="1">
+      </div>
+      <div class="form-group">
+        <label>Phase (auto-calculated)</label>
+        <input id="rm-phase" type="text" readonly style="color:var(--text-muted);">
+      </div>
+    </div>
+    <div style="background:var(--surface3);border-radius:6px;padding:16px;margin-bottom:16px;">
+      <div style="font-size:11px;color:var(--gold);font-family:'Cinzel',serif;letter-spacing:0.08em;margin-bottom:12px;">PLAYER 1</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Player</label>
+          <select id="rm-p1"></select>
+        </div>
+        <div class="form-group">
+          <label>Result</label>
+          <select id="rm-p1-result">
+            <option value="win">Win</option>
+            <option value="loss">Loss</option>
+            <option value="draw">Draw</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Victory Points</label>
+          <input id="rm-p1-vp" type="number" min="0" value="0">
+        </div>
+        <div class="form-group">
+          <label>Strategic Points Contributed</label>
+          <input id="rm-p1-sp" type="number" min="0" value="0">
+        </div>
+      </div>
+    </div>
+    <div style="background:var(--surface3);border-radius:6px;padding:16px;margin-bottom:16px;">
+      <div style="font-size:11px;color:var(--gold);font-family:'Cinzel',serif;letter-spacing:0.08em;margin-bottom:12px;">PLAYER 2</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Player</label>
+          <select id="rm-p2"></select>
+        </div>
+        <div class="form-group">
+          <label>Result</label>
+          <select id="rm-p2-result">
+            <option value="loss">Loss</option>
+            <option value="win">Win</option>
+            <option value="draw">Draw</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Victory Points</label>
+          <input id="rm-p2-vp" type="number" min="0" value="0">
+        </div>
+        <div class="form-group">
+          <label>Strategic Points Contributed</label>
+          <input id="rm-p2-sp" type="number" min="0" value="0">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-record-match')">Cancel</button>
+      <button class="btn btn-primary" onclick="recordMatch()">Record Match</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-edit-player">
+  <div class="modal">
+    <h3>Edit Player</h3>
+    <input type="hidden" id="ep-id">
+    <div class="form-group"><label>Player Name</label><input id="ep-name" type="text"></div>
+    <div class="form-group"><label>Faction / Army</label><input id="ep-faction" type="text"></div>
+    <div class="form-group"><label>Team</label><select id="ep-team"></select></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-edit-player')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEditPlayer()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-bye-sp">
+  <div class="modal">
+    <h3>Record Bye SP</h3>
+    <input type="hidden" id="bsp-playerid">
+    <p style="color:var(--text-muted);font-size:14px;margin-bottom:16px;" id="bsp-desc"></p>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Round</label>
+        <input id="bsp-round" type="number" min="1" readonly style="color:var(--text-muted);">
+      </div>
+      <div class="form-group">
+        <label>Strategic Points Earned</label>
+        <input id="bsp-sp" type="number" min="0" value="0">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-bye-sp')">Cancel</button>
+      <button class="btn btn-primary" onclick="recordByeSP()">Record SP</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ─── State ───────────────────────────────────────────────────────────────────
+const TEAM_COLORS = ['#C93A3A','#3A7AC9','#3AC96A','#C9A83A','#9A3AC9','#3AC9C9'];
+let state = null;
+
+function defaultState() {
+  return {
+    name: 'Unnamed Crusade',
+    numTeams: 2,
+    numPhases: 3,
+    pairing: 'roundrobin',
+    allowRematches: false,
+    roundsPerPhase: null,
+    currentRound: 1,
+    teams: [],
+    players: [],
+    matches: [],
+    pendingPairings: [],
+    phaseLocked: false,
+  };
+}
+
+// ─── Persistence ─────────────────────────────────────────────────────────────
+function save() {
+  try { localStorage.setItem('crusade_state', JSON.stringify(state)); } catch(e) {}
+}
+function load() {
+  try {
+    const raw = localStorage.getItem('crusade_state');
+    if (raw) { state = JSON.parse(raw); return true; }
+  } catch(e) {}
+  return false;
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  if (load() && state && state.teams && state.teams.length > 0) {
+    showApp();
+  } else {
+    showSetup();
+  }
+  document.getElementById('setup-teams').addEventListener('change', renderTeamNameInputs);
+  document.getElementById('setup-playercount').addEventListener('input', updateSetupDefaults);
+  renderTeamNameInputs();
+  updateSetupDefaults();
+});
+
+function showSetup() {
+  document.getElementById('setup-screen').style.display = 'block';
+  document.getElementById('main-app').style.display = 'none';
+}
+function showApp() {
+  document.getElementById('setup-screen').style.display = 'none';
+  document.getElementById('main-app').style.display = 'flex';
+  document.getElementById('main-app').style.flexDirection = 'column';
+  document.getElementById('header-title').textContent = state.name;
+  document.getElementById('header-sub').textContent =
+    `Round ${state.currentRound} · Phase ${getCurrentPhase()} · ${state.pairing === 'winpath' ? 'Win Path' : 'Round Robin'}`;
+  renderAll();
+}
+
+function renderAll() {
+  renderPhaseBar();
+  renderOverviewStats();
+  renderTeams();
+  renderMatches();
+  renderStandings();
+  renderPairings();
+  renderSettings();
+  renderRecentMatches();
+  renderOverviewStandings();
+}
+
+// ─── Setup ───────────────────────────────────────────────────────────────────
+function calcDefaultRoundsPerPhase(numPlayers, numPhases, pairing) {
+  if (pairing === 'winpath') return 3;
+  if (numPlayers < 2) return 3;
+  // Round-robin: n-1 rounds if even, n if odd
+  const totalRounds = numPlayers % 2 === 0 ? numPlayers - 1 : numPlayers;
+  return Math.max(1, Math.ceil(totalRounds / numPhases));
+}
+
+function updateSetupDefaults() {
+  const n = parseInt(document.getElementById('setup-playercount')?.value) || 8;
+  const phases = parseInt(document.getElementById('setup-phases')?.value) || 3;
+  const pairing = document.getElementById('setup-pairing')?.value || 'roundrobin';
+  const rpp = calcDefaultRoundsPerPhase(n, phases, pairing);
+  const totalRounds = rpp * phases;
+  const preview = document.getElementById('setup-rounds-preview');
+  const rppPreview = document.getElementById('setup-rpp-preview');
+  if (preview) preview.textContent = totalRounds;
+  if (rppPreview) rppPreview.textContent = rpp;
+  // Show/hide player count section only for round-robin
+  const sec = document.getElementById('setup-players-section');
+  if (sec) sec.style.display = pairing === 'winpath' ? 'none' : 'block';
+}
+function renderTeamNameInputs() {
+  const n = parseInt(document.getElementById('setup-teams').value);
+  const el = document.getElementById('team-name-inputs');
+  let html = `<div style="font-size:12px;color:var(--text-muted);font-family:'Cinzel',serif;letter-spacing:0.05em;margin-bottom:8px;">TEAM NAMES</div>`;
+  html += `<div class="form-row${n > 2 ? '-3' : ''}">`;
+  const defaultNames = ['Team Alpha','Team Beta','Team Gamma','Team Delta','Team Epsilon'];
+  for (let i = 0; i < n; i++) {
+    html += `<div class="form-group"><label>Team ${i+1}</label><input id="team-name-${i}" type="text" placeholder="${defaultNames[i]}" value="${defaultNames[i]}"></div>`;
+  }
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+function beginCrusade() {
+  const name = document.getElementById('setup-name').value.trim() || 'Unnamed Crusade';
+  const numTeams = parseInt(document.getElementById('setup-teams').value);
+  const pairing = document.getElementById('setup-pairing').value;
+  const allowRematches = document.getElementById('setup-rematch').value === '1';
+  const rppVal = document.getElementById('setup-rpp').value;
+  const numPhases = parseInt(document.getElementById('setup-phases').value);
+  const setupPlayerCount = parseInt(document.getElementById('setup-playercount').value) || 0;
+
+  state = defaultState();
+  state.name = name;
+  state.numTeams = numTeams;
+  state.pairing = pairing;
+  state.allowRematches = allowRematches;
+  state.numPhases = numPhases;
+  // Store explicit override if given; otherwise store the calculated default so it's stable
+  if (rppVal) {
+    state.roundsPerPhase = parseInt(rppVal);
+  } else {
+    state.roundsPerPhase = calcDefaultRoundsPerPhase(setupPlayerCount || 8, numPhases, pairing);
+  }
+
+  for (let i = 0; i < numTeams; i++) {
+    const teamName = (document.getElementById(`team-name-${i}`)?.value.trim()) || `Team ${i+1}`;
+    state.teams.push({ id: 't'+i, name: teamName, color: TEAM_COLORS[i] });
+  }
+
+  save();
+  showApp();
+  toast('Crusade begun. For the Emperor!');
+}
+
+// ─── Phase Logic ─────────────────────────────────────────────────────────────
+function getRoundsPerPhase() {
+  // Always use stored value (set at crusade creation from player count or explicit override)
+  return state.roundsPerPhase || 3;
+}
+
+function getCurrentPhase() {
+  const rpp = getRoundsPerPhase();
+  return Math.min(Math.ceil(state.currentRound / rpp), state.numPhases);
+}
+
+function getPhaseForRound(round) {
+  const rpp = getRoundsPerPhase();
+  return Math.min(Math.ceil(round / rpp), state.numPhases);
+}
+
+function getPhaseRoundRange(phase) {
+  const rpp = getRoundsPerPhase();
+  const start = (phase - 1) * rpp + 1;
+  const end = phase * rpp;
+  return { start, end };
+}
+
+// ─── Player Stats ─────────────────────────────────────────────────────────────
+function getPlayerStats(playerId, upToRound = null) {
+  const matches = state.matches.filter(m => {
+    const inRound = upToRound === null || m.round <= upToRound;
+    return inRound && (m.p1 === playerId || m.p2 === playerId);
+  });
+  let wins = 0, losses = 0, draws = 0, vpFor = 0, vpAgainst = 0;
+  let winPath = [];
+  const sortedMatches = [...matches].sort((a,b) => a.round - b.round);
+  sortedMatches.forEach(m => {
+    if (m.isBye) return; // bye rounds don't count toward W/L/path
+    if (m.p1 === playerId) {
+      vpFor += m.p1vp; vpAgainst += m.p2vp;
+      if (m.p1result === 'win') { wins++; winPath.push('W'); }
+      else if (m.p1result === 'loss') { losses++; winPath.push('L'); }
+      else { draws++; winPath.push('D'); }
+    } else {
+      vpFor += m.p2vp; vpAgainst += m.p1vp;
+      if (m.p2result === 'win') { wins++; winPath.push('W'); }
+      else if (m.p2result === 'loss') { losses++; winPath.push('L'); }
+      else { draws++; winPath.push('D'); }
+    }
+  });
+  const gp = wins + losses + draws;
+  const winPct = gp > 0 ? wins / gp : 0;
+  return { wins, losses, draws, gp, vpFor, vpAgainst, winPct, winPath, matches: sortedMatches };
+}
+
+function getOGW(playerId) {
+  const stats = getPlayerStats(playerId);
+  const opponentIds = [];
+  stats.matches.forEach(m => {
+    if (m.isBye) return;
+    const oppId = m.p1 === playerId ? m.p2 : m.p1;
+    if (oppId !== '__BYE__') opponentIds.push(oppId);
+  });
+  if (opponentIds.length === 0) return 0;
+  const total = opponentIds.reduce((sum, oid) => {
+    const os = getPlayerStats(oid);
+    return sum + os.winPct;
+  }, 0);
+  return total / opponentIds.length;
+}
+
+function getWinPathKey(playerId) {
+  const stats = getPlayerStats(playerId);
+  return stats.winPath.join('');
+}
+
+// ─── SP Tracking ─────────────────────────────────────────────────────────────
+function getTeamSP(teamId, phase) {
+  const { start, end } = getPhaseRoundRange(phase);
+  let sp = 0;
+  state.matches.forEach(m => {
+    if (m.round >= start && m.round <= end) {
+      const p1 = state.players.find(p => p.id === m.p1);
+      const p2 = m.p2 === '__BYE__' ? null : state.players.find(p => p.id === m.p2);
+      if (p1 && p1.teamId === teamId) sp += m.p1sp;
+      if (p2 && p2.teamId === teamId) sp += m.p2sp;
+    }
+  });
+  return sp;
+}
+
+function getPhaseWinner(phase) {
+  let maxSP = -1, winner = null;
+  state.teams.forEach(t => {
+    const sp = getTeamSP(t.id, phase);
+    if (sp > maxSP) { maxSP = sp; winner = t; }
+  });
+  return winner;
+}
+
+// ─── Render Phase Bar ─────────────────────────────────────────────────────────
+function renderPhaseBar() {
+  const currentPhase = getCurrentPhase();
+  const rpp = getRoundsPerPhase();
+  let html = '';
+  for (let p = 1; p <= state.numPhases; p++) {
+    const { start, end } = getPhaseRoundRange(p);
+    const isCurrent = p === currentPhase;
+    const isComplete = p < currentPhase;
+    let cls = 'phase-seg';
+    if (isCurrent) cls += ' current';
+    if (isComplete) cls += ' complete';
+    const winner = isComplete ? getPhaseWinner(p) : null;
+    html += `<div class="${cls}">
+      <div>Phase ${p} — Rounds ${start}–${end}</div>
+      ${winner ? `<div class="phase-winner">✦ ${winner.name}</div>` : ''}
+    </div>`;
+  }
+  document.getElementById('phase-bar').innerHTML = html;
+}
+
+// ─── Overview ─────────────────────────────────────────────────────────────────
+function renderOverviewStats() {
+  const currentPhase = getCurrentPhase();
+  const totalMatches = state.matches.length;
+  const totalPlayers = state.players.length;
+  const phaseSPs = state.teams.map(t => ({
+    team: t, sp: getTeamSP(t.id, currentPhase)
+  })).sort((a,b) => b.sp - a.sp);
+  const leadingTeam = phaseSPs[0];
+
+  document.getElementById('overview-stats').innerHTML = `
+    <div class="stat-box"><div class="val">${state.currentRound}</div><div class="lbl">Current Round</div></div>
+    <div class="stat-box"><div class="val">${currentPhase} / ${state.numPhases}</div><div class="lbl">Current Phase</div></div>
+    <div class="stat-box"><div class="val">${totalMatches}</div><div class="lbl">Matches Played</div></div>
+    <div class="stat-box"><div class="val">${totalPlayers}</div><div class="lbl">Players Enlisted</div></div>
+  `;
+}
+
+function renderOverviewStandings() {
+  const currentPhase = getCurrentPhase();
+  const rows = state.teams.map(t => {
+    const sp = getTeamSP(t.id, currentPhase);
+    const phasesWon = [];
+    for (let p = 1; p < currentPhase; p++) {
+      const w = getPhaseWinner(p);
+      if (w && w.id === t.id) phasesWon.push(p);
+    }
+    return { team: t, sp, phasesWon };
+  }).sort((a,b) => b.sp - a.sp);
+
+  document.getElementById('overview-standings-table').innerHTML = `
+    <thead><tr>
+      <th>Team</th><th>SP (Phase ${currentPhase})</th><th>Phases Won</th>
+    </tr></thead>
+    <tbody>
+    ${rows.map((r,i) => `<tr>
+      <td><span class="team-badge" style="background:${r.team.color}"></span>${r.team.name}</td>
+      <td><strong>${r.sp}</strong></td>
+      <td>${r.phasesWon.length > 0 ? r.phasesWon.map(p=>`<span class="tag tag-phase">Phase ${p}</span>`).join(' ') : '<span style="color:var(--text-dim)">—</span>'}</td>
+    </tr>`).join('')}
+    </tbody>
+  `;
+}
+
+function renderRecentMatches() {
+  const recent = [...state.matches].sort((a,b) => b.round - a.round).slice(0,5);
+  if (recent.length === 0) {
+    document.getElementById('recent-matches').innerHTML = '<div class="empty-state">No matches recorded yet.</div>';
+    return;
+  }
+  document.getElementById('recent-matches').innerHTML = recent.map(m => {
+    const p1 = state.players.find(p => p.id === m.p1);
+    const p2 = state.players.find(p => p.id === m.p2);
+    const t1 = p1 ? state.teams.find(t => t.id === p1.teamId) : null;
+    const t2 = p2 ? state.teams.find(t => t.id === p2.teamId) : null;
+    return `<div style="padding:10px 0;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;font-size:13px;">
+      <span class="tag tag-phase">R${m.round}</span>
+      <span style="color:${m.p1result==='win'?'#6ABF6A':'#E06060'}">${p1?.name||'?'}</span>
+      <span style="color:var(--text-muted);font-size:11px;">${m.p1vp}VP</span>
+      <span style="color:var(--text-dim);font-family:'Cinzel',serif;">vs</span>
+      <span style="color:${m.p2result==='win'?'#6ABF6A':'#E06060'}">${p2?.name||'?'}</span>
+      <span style="color:var(--text-muted);font-size:11px;">${m.p2vp}VP</span>
+    </div>`;
+  }).join('');
+}
+
+// ─── Teams ────────────────────────────────────────────────────────────────────
+function renderTeams() {
+  const grid = document.getElementById('teams-grid');
+  if (state.teams.length === 0) { grid.innerHTML = '<div class="empty-state">No teams configured.</div>'; return; }
+  grid.innerHTML = `<div class="grid-${Math.min(state.teams.length, 3)}">` +
+    state.teams.map(team => {
+      const players = state.players.filter(p => p.teamId === team.id);
+      const currentPhase = getCurrentPhase();
+      const teamSP = getTeamSP(team.id, currentPhase);
+      return `<div class="card">
+        <div class="card-header">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span class="team-badge" style="background:${team.color};width:14px;height:14px;"></span>
+            <span class="card-title">${team.name}</span>
+          </div>
+          <span class="stat-pill pill-gold">${teamSP} SP</span>
+        </div>
+        <div style="font-size:11px;color:var(--text-muted);font-family:'Cinzel',serif;letter-spacing:0.05em;margin-bottom:8px;">ROSTER — ${players.length} player${players.length!==1?'s':''}</div>
+        ${players.length === 0 ? '<div style="color:var(--text-dim);font-style:italic;font-size:13px;">No players assigned</div>' :
+          players.map(p => {
+            const stats = getPlayerStats(p.id);
+            return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">
+              <div>
+                <div style="font-size:14px;">${p.name}</div>
+                <div style="font-size:12px;color:var(--text-muted);font-style:italic;">${p.faction||''}</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px;">
+                <span style="font-size:12px;color:#6ABF6A;">${stats.wins}W</span>
+                <span style="font-size:12px;color:#E06060;">${stats.losses}L</span>
+                <button class="btn btn-sm btn-ghost" onclick="openEditPlayer('${p.id}')">✎</button>
+                <button class="btn btn-sm btn-danger" onclick="removePlayer('${p.id}')">✕</button>
+              </div>
+            </div>`;
+          }).join('')
+        }
+      </div>`;
+    }).join('') + '</div>';
+}
+
+// ─── Matches ──────────────────────────────────────────────────────────────────
+function renderMatches() {
+  // Populate filter selects
+  const rounds = [...new Set(state.matches.map(m => m.round))].sort((a,b)=>a-b);
+  const filterRound = document.getElementById('filter-round');
+  const curRound = filterRound.value;
+  filterRound.innerHTML = '<option value="">All Rounds</option>' + rounds.map(r => `<option value="${r}" ${curRound==r?'selected':''}>Round ${r}</option>`).join('');
+
+  const phases = [...new Set(state.matches.map(m => m.phase))].sort((a,b)=>a-b);
+  const filterPhase = document.getElementById('filter-phase');
+  const curPhase = filterPhase.value;
+  filterPhase.innerHTML = '<option value="">All Phases</option>' + phases.map(p => `<option value="${p}" ${curPhase==p?'selected':''}>Phase ${p}</option>`).join('');
+
+  const filterPlayer = document.getElementById('filter-player');
+  const curPlayer = filterPlayer.value;
+  filterPlayer.innerHTML = '<option value="">All Players</option>' + state.players.map(p => `<option value="${p.id}" ${curPlayer===p.id?'selected':''}>${p.name}</option>`).join('');
+
+  let filtered = [...state.matches];
+  if (filterRound.value) filtered = filtered.filter(m => m.round == filterRound.value);
+  if (filterPhase.value) filtered = filtered.filter(m => m.phase == filterPhase.value);
+  if (filterPlayer.value) filtered = filtered.filter(m => m.p1 === filterPlayer.value || m.p2 === filterPlayer.value);
+  filtered.sort((a,b) => b.round - a.round || b.id - a.id);
+
+  const tbody = document.getElementById('matches-tbody');
+  if (filtered.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="10" class="empty-state">No matches recorded yet.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = filtered.map(m => {
+    const p1 = state.players.find(p => p.id === m.p1);
+    const p2 = m.p2 === '__BYE__' ? { name: 'BYE', teamId: null } : state.players.find(p => p.id === m.p2);
+    const t1 = p1 ? state.teams.find(t => t.id === p1.teamId) : null;
+    const t2 = p2 && p2.teamId ? state.teams.find(t => t.id === p2.teamId) : null;
+    const res1cls = m.isBye ? 'result-draw' : (m.p1result === 'win' ? 'result-win' : m.p1result === 'loss' ? 'result-loss' : 'result-draw');
+    const res2cls = m.isBye ? 'result-draw' : (m.p2result === 'win' ? 'result-win' : m.p2result === 'loss' ? 'result-loss' : 'result-draw');
+    const resultLabel = m.isBye ? 'BYE' : `${m.p1result.toUpperCase()} / ${m.p2result.toUpperCase()}`;
+    return `<tr>
+      <td><span class="tag tag-phase">R${m.round}</span></td>
+      <td><span style="color:var(--text-muted);font-size:12px;">P${m.phase}</span></td>
+      <td><span class="team-badge" style="background:${t1?.color||'#888'}"></span>${p1?.name||'?'}</td>
+      <td class="td-center">${m.p1vp}</td>
+      <td class="td-center">${m.p1sp}</td>
+      <td class="td-center"><span class="${res1cls}">${resultLabel}</span></td>
+      <td class="td-center">${m.p2sp}</td>
+      <td class="td-center">${m.p2vp}</td>
+      <td><span class="team-badge" style="background:${t2?.color||'#555'}"></span>${p2?.name||'?'}</td>
+      <td><button class="btn btn-sm btn-danger" onclick="deleteMatch(${m.id})">✕</button></td>
+    </tr>`;
+  }).join('');
+}
+
+// ─── Standings ────────────────────────────────────────────────────────────────
+function renderStandings() {
+  // Phase team standings
+  let phasesHtml = '';
+  for (let p = 1; p <= state.numPhases; p++) {
+    const currentPhase = getCurrentPhase();
+    const { start, end } = getPhaseRoundRange(p);
+    const rows = state.teams.map(t => ({ team: t, sp: getTeamSP(t.id, p) })).sort((a,b)=>b.sp-a.sp);
+    const winner = p < currentPhase ? getPhaseWinner(p) : null;
+    phasesHtml += `<div class="card">
+      <div class="card-header">
+        <span class="card-title">Phase ${p} — Rounds ${start}–${end}</span>
+        ${winner ? `<span class="stat-pill pill-win">✦ ${winner.name}</span>` : (p === currentPhase ? '<span class="stat-pill pill-gold">In Progress</span>' : '<span style="color:var(--text-dim);font-size:12px;">Upcoming</span>')}
+      </div>
+      <table>
+        <thead><tr><th>Team</th><th class="td-right">Strategic Points</th></tr></thead>
+        <tbody>
+          ${rows.map(r => `<tr>
+            <td><span class="team-badge" style="background:${r.team.color}"></span>${r.team.name}</td>
+            <td class="td-right"><strong>${r.sp}</strong></td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+  }
+  document.getElementById('standings-phases').innerHTML = `<div class="grid-${Math.min(state.numPhases,3)}">${phasesHtml}</div>`;
+
+  // Individual standings
+  const playerRows = state.players.map(p => {
+    const stats = getPlayerStats(p.id);
+    const ogw = getOGW(p.id);
+    const team = state.teams.find(t => t.id === p.teamId);
+    return { p, stats, ogw, team };
+  }).sort((a,b) => {
+    if (b.stats.wins !== a.stats.wins) return b.stats.wins - a.stats.wins;
+    return b.ogw - a.ogw;
+  });
+
+  document.getElementById('standings-tbody').innerHTML = playerRows.map(({p, stats, ogw, team}) => `<tr>
+    <td>${p.name}</td>
+    <td><span class="team-badge" style="background:${team?.color||'#888'}"></span>${team?.name||'—'}</td>
+    <td class="result-win td-center">${stats.wins}</td>
+    <td class="result-loss td-center">${stats.losses}</td>
+    <td class="td-center">${(stats.winPct*100).toFixed(0)}%</td>
+    <td class="td-center">${stats.vpFor}</td>
+    <td class="td-center">${stats.vpAgainst}</td>
+    <td class="td-center">${(ogw*100).toFixed(1)}%</td>
+    <td><code style="font-size:12px;color:var(--gold);font-family:monospace;">${stats.winPath.join('')||'—'}</code></td>
+  </tr>`).join('');
+}
+
+// ─── Pairings ─────────────────────────────────────────────────────────────────
+function generatePairings() {
+  if (state.players.length < 2) {
+    toast('Need at least 2 players to generate pairings.');
+    return;
+  }
+  const nextRound = state.currentRound;
+  let pairs, byes = [];
+
+  if (state.pairing === 'winpath') {
+    ({ pairs, byes } = generateWinPathPairings(nextRound));
+  } else {
+    ({ pairs, byes } = generateRoundRobinPairings(nextRound));
+  }
+
+  state.pendingPairings = pairs.map(([a, b]) => ({ p1: a.id, p2: b.id }));
+  state.pendingByes = byes.map(p => p.id);
+  save();
+  renderPairings();
+}
+
+function generateRoundRobinPairings(round) {
+  const players = [...state.players];
+  const n = players.length;
+  if (n === 0) return { pairs: [], byes: [] };
+
+  // Build set of played matchups
+  const played = new Set();
+  state.matches.forEach(m => played.add([m.p1,m.p2].sort().join('|')));
+
+  const hasPlayed = (a, b) => played.has([a.id,b.id].sort().join('|'));
+
+  // Score-based sort: first prioritize players who have fewer games played (more unplayed opponents)
+  // Then use Win Path as secondary sort within pairing groups
+  // Use a greedy matching algorithm: pair best-available by Win Path,
+  // strongly preferring unplayed opponents
+
+  const remaining = [...players];
+  const pairs = [];
+  const byes = [];
+
+  // Sort players by winPath key as primary seeding (mirroring Win Path logic)
+  remaining.sort((a, b) => {
+    const sa = getPlayerStats(a.id), sb = getPlayerStats(b.id);
+    if (sb.wins !== sa.wins) return sb.wins - sa.wins;
+    if (sa.losses !== sb.losses) return sa.losses - sb.losses;
+    const pathA = getWinPathKey(a.id), pathB = getWinPathKey(b.id);
+    if (pathA !== pathB) return pathA.localeCompare(pathB);
+    return getOGW(b.id) - getOGW(a.id);
+  });
+
+  while (remaining.length >= 2) {
+    const a = remaining.shift();
+    // Find best opponent: prefer unplayed, then closest in win-path order (already sorted)
+    let bestIdx = -1;
+    // First pass: find first unplayed opponent
+    if (!state.allowRematches) {
+      for (let i = 0; i < remaining.length; i++) {
+        if (!hasPlayed(a, remaining[i])) { bestIdx = i; break; }
+      }
+    }
+    // If all played or rematches allowed, take the first in sorted order
+    if (bestIdx === -1) bestIdx = 0;
+    const b = remaining.splice(bestIdx, 1)[0];
+    pairs.push([a, b]);
+  }
+  if (remaining.length === 1) byes.push(remaining[0]);
+
+  return { pairs, byes };
+}
+
+function generateWinPathPairings(round) {
+  const players = [...state.players];
+
+  // Group by win-loss record (wins desc, losses asc)
+  const groups = {};
+  players.forEach(p => {
+    const stats = getPlayerStats(p.id);
+    const key = `${stats.wins}-${stats.losses}`;
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(p);
+  });
+
+  // Sort groups best to worst
+  const sortedGroupKeys = Object.keys(groups).sort((a, b) => {
+    const [aw, al] = a.split('-').map(Number);
+    const [bw, bl] = b.split('-').map(Number);
+    if (bw !== aw) return bw - aw;
+    return al - bl;
+  });
+
+  const pairs = [];
+  const byes = [];
+  let dropDown = null;
+
+  sortedGroupKeys.forEach(key => {
+    let group = [...groups[key]];
+    if (dropDown) { group.unshift(dropDown); dropDown = null; }
+
+    // Within group, sort by win-path sequence then OGW
+    group.sort((a, b) => {
+      const pathA = getWinPathKey(a.id);
+      const pathB = getWinPathKey(b.id);
+      if (pathA !== pathB) return pathA.localeCompare(pathB);
+      return getOGW(b.id) - getOGW(a.id);
+    });
+
+    // Sub-group by win-path
+    const pathGroups = {};
+    group.forEach(p => {
+      const pk = getWinPathKey(p.id);
+      if (!pathGroups[pk]) pathGroups[pk] = [];
+      pathGroups[pk].push(p);
+    });
+
+    Object.values(pathGroups).forEach(pg => {
+      let sorted = pg.sort((a,b) => getOGW(b.id) - getOGW(a.id));
+      if (sorted.length % 2 !== 0) {
+        // lowest OGW drops down
+        const lowest = sorted.pop();
+        dropDown = lowest;
+      }
+      for (let i = 0; i < sorted.length; i += 2) {
+        if (sorted[i+1]) pairs.push([sorted[i], sorted[i+1]]);
+      }
+    });
+  });
+
+  if (dropDown) byes.push(dropDown);
+  return { pairs, byes };
+}
+
+function renderPairings() {
+  const nextRound = state.currentRound;
+  document.getElementById('next-round-num').textContent = nextRound;
+  document.getElementById('pairings-method-info').textContent =
+    state.pairing === 'winpath'
+      ? `Win Path pairing: players are grouped by record, then win/loss sequence, then tiebroken by Opponent Game Win%. Players dropping from odd groups fall to the next bracket.`
+      : `Round Robin pairing: priority is given to opponents each player has not yet faced. Within that, players are seeded by Win Path (record → path sequence → OGW%) for closest-skill matchups.`;
+
+  const container = document.getElementById('pairings-container');
+  const byesEl = document.getElementById('pairings-byes');
+
+  if (!state.pendingPairings || state.pendingPairings.length === 0) {
+    container.innerHTML = '<div class="empty-state">Click "Generate Next Round" to create pairings.</div>';
+    byesEl.innerHTML = '';
+    return;
+  }
+
+  container.innerHTML = state.pendingPairings.map((pair, i) => {
+    const p1 = state.players.find(p => p.id === pair.p1);
+    const p2 = state.players.find(p => p.id === pair.p2);
+    const t1 = p1 ? state.teams.find(t => t.id === p1.teamId) : null;
+    const t2 = p2 ? state.teams.find(t => t.id === p2.teamId) : null;
+    const stats1 = p1 ? getPlayerStats(p1.id) : null;
+    const stats2 = p2 ? getPlayerStats(p2.id) : null;
+    const ogw1 = p1 ? (getOGW(p1.id)*100).toFixed(1) : 0;
+    const ogw2 = p2 ? (getOGW(p2.id)*100).toFixed(1) : 0;
+    return `<div class="pairing-card">
+      <div style="font-family:'Cinzel',serif;font-size:12px;color:var(--text-dim);min-width:24px;">${i+1}.</div>
+      <div class="pairing-player">
+        <div><span class="team-badge" style="background:${t1?.color||'#888'}"></span><strong>${p1?.name||'?'}</strong></div>
+        <div class="pairing-path">${t1?.name||''} · ${stats1?.wins||0}W-${stats1?.losses||0}L · OGW ${ogw1}% · Path: ${stats1?.winPath.join('')||'—'}</div>
+      </div>
+      <div class="pairing-vs">vs</div>
+      <div class="pairing-player" style="text-align:right;">
+        <div><strong>${p2?.name||'?'}</strong><span class="team-badge" style="background:${t2?.color||'#888'};margin-left:6px;margin-right:0;"></span></div>
+        <div class="pairing-path">${t2?.name||''} · ${stats2?.wins||0}W-${stats2?.losses||0}L · OGW ${ogw2}% · Path: ${stats2?.winPath.join('')||'—'}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  if (state.pendingByes && state.pendingByes.length > 0) {
+    const byePlayers = state.pendingByes.map(id => state.players.find(p => p.id === id)).filter(Boolean);
+    byesEl.innerHTML = `<div class="alert alert-warn" style="margin-top:12px;">
+      <strong>Bye${byePlayers.length > 1 ? 's' : ''}:</strong>
+      ${byePlayers.map(p => `
+        <span style="margin-right:12px;">${p.name}
+          <button class="btn btn-sm btn-ghost" style="margin-left:8px;font-size:11px;" onclick="openByeSPModal('${p.id}')">Record SP</button>
+        </span>`).join('')}
+      <div style="font-size:12px;color:var(--text-muted);margin-top:6px;">Bye players earn no automatic SP, but you may optionally record SP for them.</div>
+    </div>`;
+  } else {
+    byesEl.innerHTML = '';
+  }
+}
+
+function lockPairings() {
+  if (!state.pendingPairings || state.pendingPairings.length === 0) {
+    toast('Generate pairings first.');
+    return;
+  }
+  state.currentRound++;
+  state.pendingPairings = [];
+  state.pendingByes = [];
+  save();
+  renderAll();
+  toast(`Round ${state.currentRound - 1} locked. Now on Round ${state.currentRound}.`);
+}
+
+// ─── Settings ─────────────────────────────────────────────────────────────────
+function renderSettings() {
+  document.getElementById('settings-name').value = state.name;
+  document.getElementById('settings-pairing').value = state.pairing;
+  document.getElementById('settings-rematch').value = state.allowRematches ? '1' : '0';
+  document.getElementById('settings-rpp').value = state.roundsPerPhase || '';
+}
+
+function updateSettings() {
+  state.name = document.getElementById('settings-name').value;
+  state.pairing = document.getElementById('settings-pairing').value;
+  state.allowRematches = document.getElementById('settings-rematch').value === '1';
+  const rpp = document.getElementById('settings-rpp').value;
+  state.roundsPerPhase = rpp ? parseInt(rpp) : null;
+  save();
+  document.getElementById('header-title').textContent = state.name;
+  renderPhaseBar();
+}
+
+// ─── Modal: Add Player ────────────────────────────────────────────────────────
+function openAddPlayerModal() {
+  const sel = document.getElementById('ap-team');
+  sel.innerHTML = state.teams.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+  document.getElementById('ap-name').value = '';
+  document.getElementById('ap-faction').value = '';
+  openModal('modal-add-player');
+}
+
+function addPlayer() {
+  const name = document.getElementById('ap-name').value.trim();
+  if (!name) { toast('Player name required.'); return; }
+  const faction = document.getElementById('ap-faction').value.trim();
+  const teamId = document.getElementById('ap-team').value;
+  state.players.push({ id: 'p' + Date.now(), name, faction, teamId });
+  save();
+  closeModal('modal-add-player');
+  renderAll();
+  toast(`${name} enlisted.`);
+}
+
+// ─── Modal: Edit Player ───────────────────────────────────────────────────────
+function openEditPlayer(playerId) {
+  const p = state.players.find(pl => pl.id === playerId);
+  if (!p) return;
+  document.getElementById('ep-id').value = p.id;
+  document.getElementById('ep-name').value = p.name;
+  document.getElementById('ep-faction').value = p.faction || '';
+  const sel = document.getElementById('ep-team');
+  sel.innerHTML = state.teams.map(t => `<option value="${t.id}" ${t.id===p.teamId?'selected':''}>${t.name}</option>`).join('');
+  openModal('modal-edit-player');
+}
+
+function saveEditPlayer() {
+  const id = document.getElementById('ep-id').value;
+  const p = state.players.find(pl => pl.id === id);
+  if (!p) return;
+  p.name = document.getElementById('ep-name').value.trim() || p.name;
+  p.faction = document.getElementById('ep-faction').value.trim();
+  p.teamId = document.getElementById('ep-team').value;
+  save();
+  closeModal('modal-edit-player');
+  renderAll();
+  toast('Player updated.');
+}
+
+function removePlayer(playerId) {
+  const p = state.players.find(pl => pl.id === playerId);
+  if (!p) return;
+  if (!confirm(`Remove ${p.name} from the Crusade? Their match records will remain.`)) return;
+  state.players = state.players.filter(pl => pl.id !== playerId);
+  save();
+  renderAll();
+  toast(`${p.name} removed.`);
+}
+
+// ─── Modal: Record Match ──────────────────────────────────────────────────────
+function openRecordMatchModal() {
+  const players = state.players;
+  if (players.length < 2) { toast('Need at least 2 players.'); return; }
+  document.getElementById('rm-p1').innerHTML = players.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+  document.getElementById('rm-p2').innerHTML = players.map((p,i) => `<option value="${p.id}" ${i===1?'selected':''}>${p.name}</option>`).join('');
+  document.getElementById('rm-round').value = state.currentRound;
+  document.getElementById('rm-p1-vp').value = 0;
+  document.getElementById('rm-p2-vp').value = 0;
+  document.getElementById('rm-p1-sp').value = 0;
+  document.getElementById('rm-p2-sp').value = 0;
+  document.getElementById('rm-p1-result').value = 'win';
+  document.getElementById('rm-p2-result').value = 'loss';
+  updateMatchPhaseDisplay();
+  document.getElementById('rm-round').addEventListener('input', updateMatchPhaseDisplay);
+  openModal('modal-record-match');
+}
+
+function updateMatchPhaseDisplay() {
+  const round = parseInt(document.getElementById('rm-round').value) || 1;
+  document.getElementById('rm-phase').value = `Phase ${getPhaseForRound(round)}`;
+}
+
+function recordMatch() {
+  const p1id = document.getElementById('rm-p1').value;
+  const p2id = document.getElementById('rm-p2').value;
+  if (p1id === p2id) { toast('Players must be different.'); return; }
+  const round = parseInt(document.getElementById('rm-round').value) || state.currentRound;
+  const phase = getPhaseForRound(round);
+  const match = {
+    id: Date.now(),
+    round, phase,
+    p1: p1id, p2: p2id,
+    p1result: document.getElementById('rm-p1-result').value,
+    p2result: document.getElementById('rm-p2-result').value,
+    p1vp: parseInt(document.getElementById('rm-p1-vp').value) || 0,
+    p2vp: parseInt(document.getElementById('rm-p2-vp').value) || 0,
+    p1sp: parseInt(document.getElementById('rm-p1-sp').value) || 0,
+    p2sp: parseInt(document.getElementById('rm-p2-sp').value) || 0,
+  };
+  state.matches.push(match);
+  save();
+  closeModal('modal-record-match');
+  renderAll();
+  toast('Match recorded. For the Emperor!');
+}
+
+function deleteMatch(id) {
+  if (!confirm('Delete this match record?')) return;
+  state.matches = state.matches.filter(m => m.id !== id);
+  save();
+  renderAll();
+  toast('Match deleted.');
+}
+
+// ─── Bye SP Recording ─────────────────────────────────────────────────────────
+function openByeSPModal(playerId) {
+  const p = state.players.find(pl => pl.id === playerId);
+  if (!p) return;
+  document.getElementById('bsp-playerid').value = playerId;
+  document.getElementById('bsp-desc').textContent = `Optionally record Strategic Points for ${p.name} (bye player — no opponent this round).`;
+  document.getElementById('bsp-round').value = state.currentRound;
+  document.getElementById('bsp-sp').value = 0;
+  openModal('modal-bye-sp');
+}
+
+function recordByeSP() {
+  const playerId = document.getElementById('bsp-playerid').value;
+  const sp = parseInt(document.getElementById('bsp-sp').value) || 0;
+  const round = parseInt(document.getElementById('bsp-round').value) || state.currentRound;
+  const phase = getPhaseForRound(round);
+  if (sp === 0) { closeModal('modal-bye-sp'); return; }
+  // Record as a bye match entry (p2 = 'BYE' sentinel)
+  state.matches.push({
+    id: Date.now(),
+    round, phase,
+    p1: playerId, p2: '__BYE__',
+    p1result: 'bye', p2result: 'bye',
+    p1vp: 0, p2vp: 0,
+    p1sp: sp, p2sp: 0,
+    isBye: true,
+  });
+  save();
+  closeModal('modal-bye-sp');
+  renderAll();
+  toast('Bye SP recorded.');
+}
+
+
+function exportData() {
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `${state.name.replace(/\s+/g,'_')}_crusade.json`;
+  a.click(); URL.revokeObjectURL(url);
+}
+
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const imported = JSON.parse(e.target.result);
+      state = imported;
+      save();
+      showApp();
+      toast('Crusade data imported.');
+    } catch { toast('Invalid file.'); }
+  };
+  reader.readAsText(file);
+}
+
+function resetCrusade() {
+  if (!confirm('Are you sure you want to reset and start a new Crusade? All data will be lost.')) return;
+  localStorage.removeItem('crusade_state');
+  location.reload();
+}
+
+// ─── UI Helpers ───────────────────────────────────────────────────────────────
+function showView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-'+name).classList.add('active');
+  document.querySelectorAll('nav button').forEach((b,i) => {
+    b.classList.toggle('active', b.getAttribute('onclick').includes(`'${name}'`));
+  });
+  if (name === 'matches') renderMatches();
+  if (name === 'standings') renderStandings();
+  if (name === 'pairings') renderPairings();
+  if (name === 'teams') renderTeams();
+}
+
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.addEventListener('click', e => {
+  if (e.target.classList.contains('modal-overlay')) {
+    e.target.classList.remove('open');
+  }
+});
+
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3000);
+}
+</script>
+</body>
+</html>
