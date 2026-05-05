@@ -223,6 +223,31 @@
   ::-webkit-scrollbar-track { background: var(--surface); }
   ::-webkit-scrollbar-thumb { background: var(--border-gold); border-radius: 3px; }
 
+  /* Print */
+  @media print {
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    body { background: #fff !important; color: #000 !important; font-family: Georgia, serif; font-size: 11pt; }
+    #main-app > header, main > .view:not(#view-print-render), #toast, .modal-overlay { display: none !important; }
+    #view-print-render { display: block !important; }
+    .print-page { page-break-after: always; padding: 0; }
+    .print-page:last-child { page-break-after: avoid; }
+    .print-header { border-bottom: 2px solid #000; margin-bottom: 18pt; padding-bottom: 10pt; }
+    .print-header h1 { font-size: 20pt; margin: 0 0 4pt; }
+    .print-header .print-sub { font-size: 10pt; color: #444; }
+    .print-section-title { font-size: 13pt; font-weight: bold; border-bottom: 1px solid #000; padding-bottom: 4pt; margin: 14pt 0 8pt; letter-spacing: 0.05em; text-transform: uppercase; }
+    .print-table { width: 100%; border-collapse: collapse; font-size: 10pt; margin-bottom: 12pt; }
+    .print-table th { border: 1px solid #000; padding: 4pt 6pt; text-align: left; background: #eee !important; font-weight: bold; text-transform: uppercase; font-size: 9pt; letter-spacing: 0.04em; }
+    .print-table td { border: 1px solid #aaa; padding: 4pt 6pt; }
+    .print-table tr:nth-child(even) td { background: #f8f8f8 !important; }
+    .print-pairing-row td { padding: 6pt 8pt; font-size: 12pt; }
+    .print-pairing-num { font-weight: bold; color: #000; width: 28pt; }
+    .print-vs { text-align: center; font-weight: bold; width: 30pt; }
+    .print-bye-box { border: 1px solid #aaa; padding: 6pt 10pt; font-size: 10pt; margin-top: 8pt; background: #f0f0f0 !important; }
+    .print-footer { position: fixed; bottom: 0; left: 0; right: 0; border-top: 1px solid #ccc; font-size: 8pt; color: #666; padding: 4pt 0; display: flex; justify-content: space-between; }
+    @page { margin: 18mm 16mm; }
+    @page { @bottom-center { content: counter(page) " of " counter(pages); font-size: 8pt; color: #888; } }
+  }
+
   /* Alert */
   .alert { padding: 10px 14px; border-radius: 4px; margin-bottom: 12px; font-size: 14px; }
   .alert-info { background: rgba(26,58,90,0.4); border: 1px solid rgba(58,106,154,0.5); color: #7AAAD0; }
@@ -346,6 +371,7 @@
         <button onclick="showView('matches')">Matches</button>
         <button onclick="showView('standings')">Standings</button>
         <button onclick="showView('pairings')">Pairings</button>
+        <button onclick="showView('print')">Print / Export</button>
         <button onclick="showView('settings')">Settings</button>
       </nav>
     </header>
@@ -436,6 +462,7 @@
           <div style="display:flex;gap:8px;">
             <button class="btn btn-sm" onclick="generatePairings()">Generate Next Round</button>
             <button class="btn btn-sm btn-ghost" onclick="lockPairings()">Lock &amp; Advance Round</button>
+            <button class="btn btn-sm btn-ghost" onclick="quickPrintPairings()" title="Print pairings slip for this round">⎙ Print Slip</button>
           </div>
         </div>
         <div id="pairings-method-info" class="alert alert-info" style="margin-bottom:16px;"></div>
@@ -500,6 +527,63 @@
           </div>
         </div>
       </div>
+
+      <!-- PRINT / EXPORT -->
+      <div id="view-print" class="view">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+          <h2 style="font-size:16px;color:var(--gold);">Print / Export</h2>
+          <button class="btn btn-primary" onclick="runFullPrint()">⎙ &nbsp; Print Now</button>
+        </div>
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-header"><span class="card-title">Select Sections</span></div>
+            <div style="display:flex;flex-direction:column;gap:12px;">
+              <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-family:'Crimson Pro',serif;font-size:15px;">
+                <input type="checkbox" id="pc-cover" checked style="width:16px;height:16px;" onchange="renderPrintPreview()">
+                Cover Page
+                <span style="color:var(--text-muted);font-size:12px;">Crusade name, date, round &amp; phase</span>
+              </label>
+              <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-family:'Crimson Pro',serif;font-size:15px;">
+                <input type="checkbox" id="pc-phases" checked style="width:16px;height:16px;" onchange="renderPrintPreview()">
+                Phase Summary
+                <span style="color:var(--text-muted);font-size:12px;">SP standings &amp; phase winners</span>
+              </label>
+              <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-family:'Crimson Pro',serif;font-size:15px;">
+                <input type="checkbox" id="pc-rosters" checked style="width:16px;height:16px;" onchange="renderPrintPreview()">
+                Team Rosters
+                <span style="color:var(--text-muted);font-size:12px;">Player name, faction, W/L per team</span>
+              </label>
+              <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-family:'Crimson Pro',serif;font-size:15px;">
+                <input type="checkbox" id="pc-standings" checked style="width:16px;height:16px;" onchange="renderPrintPreview()">
+                Individual Standings
+                <span style="color:var(--text-muted);font-size:12px;">Full player table with Win%, VP, OGW%, Path</span>
+              </label>
+              <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-family:'Crimson Pro',serif;font-size:15px;">
+                <input type="checkbox" id="pc-pairings" checked style="width:16px;height:16px;" onchange="renderPrintPreview()">
+                Current Pairings
+                <span style="color:var(--text-muted);font-size:12px;">Only included if pairings are generated</span>
+              </label>
+              <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-family:'Crimson Pro',serif;font-size:15px;">
+                <input type="checkbox" id="pc-history" style="width:16px;height:16px;" onchange="renderPrintPreview()">
+                Match History
+                <span style="color:var(--text-muted);font-size:12px;">All matches grouped by round (can be long)</span>
+              </label>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">Preview</span></div>
+            <div id="print-preview-summary" style="color:var(--text-muted);font-size:14px;line-height:2;"></div>
+            <div class="ornament" style="margin:20px 0;">✦</div>
+            <div class="alert alert-info" style="font-size:13px;">
+              Clicking <strong>Print Now</strong> will open your browser's print dialog.
+              Choose <em>Save as PDF</em> there to export a file.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hidden print render target (replaces all other views at print time) -->
+      <div id="view-print-render" class="view" style="display:none;"></div>
 
     </main>
   </div>
@@ -1601,6 +1685,7 @@ function showView(name) {
   if (name === 'standings') renderStandings();
   if (name === 'pairings') renderPairings();
   if (name === 'teams') renderTeams();
+  if (name === 'print') renderPrintPreview();
 }
 
 function openModal(id) { document.getElementById(id).classList.add('open'); }
@@ -1610,6 +1695,308 @@ document.addEventListener('click', e => {
     e.target.classList.remove('open');
   }
 });
+
+// ─── Print ────────────────────────────────────────────────────────────────────
+
+function buildPrintHeader(subtitle) {
+  const now = new Date().toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
+  return `<div class="print-header">
+    <h1>${state.name}</h1>
+    <div class="print-sub">${subtitle} &nbsp;·&nbsp; Printed ${now}</div>
+  </div>`;
+}
+
+function buildPrintFooter() {
+  const now = new Date().toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
+  return `<div class="print-footer">
+    <span>${state.name}</span><span>${now}</span>
+  </div>`;
+}
+
+function buildCoverPage() {
+  const cp = getCurrentPhase();
+  const rpp = getRoundsPerPhase();
+  const { start, end } = getPhaseRoundRange(cp);
+  const now = new Date().toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+  return `<div class="print-page" style="display:flex;flex-direction:column;justify-content:center;min-height:80vh;text-align:center;">
+    <div style="font-size:28pt;font-weight:bold;letter-spacing:0.06em;margin-bottom:12pt;">${state.name}</div>
+    <div style="font-size:14pt;color:#444;margin-bottom:32pt;">Warhammer 40,000 Crusade Campaign</div>
+    <table class="print-table" style="max-width:320pt;margin:0 auto 24pt;">
+      <tr><th>Round</th><td>${state.currentRound}</td></tr>
+      <tr><th>Phase</th><td>${cp} of ${state.numPhases} (Rounds ${start}–${end})</td></tr>
+      <tr><th>Players</th><td>${state.players.length}</td></tr>
+      <tr><th>Teams</th><td>${state.numTeams === 0 ? 'Individual Tournament' : state.teams.map(t=>t.name).join(', ')}</td></tr>
+      <tr><th>Pairing Method</th><td>${state.pairing === 'winpath' ? 'Win Path' : 'Round Robin'}</td></tr>
+      <tr><th>Matches Played</th><td>${state.matches.filter(m=>!m.isBye).length}</td></tr>
+    </table>
+    <div style="font-size:10pt;color:#888;">${now}</div>
+  </div>`;
+}
+
+function buildPhaseSummary() {
+  const spPerMatch = state.spMethod === 'per_match';
+  let html = `<div class="print-page">
+    ${buildPrintHeader(`Round ${state.currentRound} · Phase ${getCurrentPhase()} of ${state.numPhases}`)}
+    <div class="print-section-title">Phase Summary</div>`;
+
+  if (state.numTeams === 0) {
+    html += `<p style="font-size:10pt;color:#555;font-style:italic;">Individual tournament — no team phase tracking.</p>`;
+  } else {
+    for (let p = 1; p <= state.numPhases; p++) {
+      const cp = getCurrentPhase();
+      const { start, end } = getPhaseRoundRange(p);
+      const winner = p < cp ? getPhaseWinner(p) : null;
+      const rows = state.teams.map(t => {
+        const { score, sp, matchesPlayed, label } = getTeamPhaseScore(t.id, p);
+        return { team: t, score, sp, matchesPlayed, label };
+      }).sort((a,b) => b.score - a.score);
+      html += `<div style="margin-bottom:14pt;">
+        <div style="font-weight:bold;font-size:11pt;margin-bottom:4pt;">
+          Phase ${p} — Rounds ${start}–${end}
+          ${winner ? ` &nbsp;·&nbsp; <em>Winner: ${winner.name}</em>` : (p === cp ? ' &nbsp;·&nbsp; <em>In Progress</em>' : ' &nbsp;·&nbsp; <em>Upcoming</em>')}
+        </div>
+        <table class="print-table">
+          <thead><tr>
+            <th>Team</th><th>SP</th><th>Matches</th>
+            ${spPerMatch ? '<th>SP / Match</th>' : ''}
+          </tr></thead>
+          <tbody>${rows.map(r => `<tr>
+            <td>${r.team.name}</td>
+            <td>${r.sp}</td>
+            <td>${r.matchesPlayed}</td>
+            ${spPerMatch ? `<td><strong>${r.label}</strong></td>` : ''}
+          </tr>`).join('')}</tbody>
+        </table>
+      </div>`;
+    }
+  }
+  html += `</div>`;
+  return html;
+}
+
+function buildRosters() {
+  let html = `<div class="print-page">
+    ${buildPrintHeader('Team Rosters')}
+    <div class="print-section-title">Rosters</div>`;
+
+  if (state.numTeams === 0) {
+    html += `<table class="print-table"><thead><tr>
+      <th>Player</th><th>Faction</th><th>W</th><th>L</th><th>Win%</th>
+    </tr></thead><tbody>`;
+    state.players.forEach(p => {
+      const s = getPlayerStats(p.id);
+      html += `<tr><td>${p.name}</td><td>${p.faction||'—'}</td>
+        <td>${s.wins}</td><td>${s.losses}</td>
+        <td>${(s.winPct*100).toFixed(0)}%</td></tr>`;
+    });
+    html += `</tbody></table>`;
+  } else {
+    state.teams.forEach(team => {
+      const players = state.players.filter(p => p.teamId === team.id);
+      html += `<div style="margin-bottom:14pt;">
+        <div style="font-weight:bold;font-size:11pt;margin-bottom:4pt;">${team.name}</div>
+        <table class="print-table"><thead><tr>
+          <th>Player</th><th>Faction</th><th>W</th><th>L</th><th>Win%</th>
+        </tr></thead><tbody>`;
+      if (players.length === 0) {
+        html += `<tr><td colspan="5" style="color:#888;font-style:italic;">No players assigned</td></tr>`;
+      } else {
+        players.forEach(p => {
+          const s = getPlayerStats(p.id);
+          html += `<tr><td>${p.name}</td><td>${p.faction||'—'}</td>
+            <td>${s.wins}</td><td>${s.losses}</td>
+            <td>${(s.winPct*100).toFixed(0)}%</td></tr>`;
+        });
+      }
+      html += `</tbody></table></div>`;
+    });
+  }
+  html += `</div>`;
+  return html;
+}
+
+function buildIndividualStandings() {
+  const rows = state.players.map(p => {
+    const s = getPlayerStats(p.id);
+    const ogw = getOGW(p.id);
+    const team = state.teams.find(t => t.id === p.teamId);
+    return { p, s, ogw, team };
+  }).sort((a,b) => b.s.wins - a.s.wins || b.ogw - a.ogw);
+
+  let html = `<div class="print-page">
+    ${buildPrintHeader('Individual Standings')}
+    <div class="print-section-title">Individual Standings</div>
+    <table class="print-table"><thead><tr>
+      <th>#</th><th>Player</th>
+      ${state.numTeams > 0 ? '<th>Team</th>' : ''}
+      <th>W</th><th>L</th><th>Win%</th>
+      <th>VP For</th><th>VP Ag.</th><th>OGW%</th><th>Win Path</th>
+    </tr></thead><tbody>`;
+  rows.forEach((r, i) => {
+    html += `<tr>
+      <td>${i+1}</td>
+      <td>${r.p.name}${r.p.faction ? `<br><em style="font-size:8pt;color:#666;">${r.p.faction}</em>` : ''}</td>
+      ${state.numTeams > 0 ? `<td>${r.team?.name||'—'}</td>` : ''}
+      <td>${r.s.wins}</td><td>${r.s.losses}</td>
+      <td>${(r.s.winPct*100).toFixed(0)}%</td>
+      <td>${r.s.vpFor}</td><td>${r.s.vpAgainst}</td>
+      <td>${(r.ogw*100).toFixed(1)}%</td>
+      <td style="font-family:monospace;">${r.s.winPath.join('')||'—'}</td>
+    </tr>`;
+  });
+  html += `</tbody></table></div>`;
+  return html;
+}
+
+function buildPairingsSection() {
+  const pairs = state.pendingPairings || [];
+  const byes = (state.pendingByes || []).map(id => state.players.find(p => p.id === id)).filter(Boolean);
+  const round = state.currentRound;
+
+  let html = `<div class="print-page">
+    <div class="print-header">
+      <h1>${state.name}</h1>
+      <div class="print-sub">Round ${round} Pairings &nbsp;·&nbsp; Phase ${getCurrentPhase()} of ${state.numPhases}</div>
+    </div>
+    <table class="print-table">
+      <thead><tr>
+        <th style="width:28pt;">#</th>
+        <th>Player</th>
+        <th style="width:30pt;text-align:center;">vs</th>
+        <th>Player</th>
+      </tr></thead>
+      <tbody>`;
+
+  if (pairs.length === 0) {
+    html += `<tr><td colspan="4" style="color:#888;font-style:italic;text-align:center;">No pairings generated yet.</td></tr>`;
+  } else {
+    pairs.forEach((pair, i) => {
+      const p1 = state.players.find(p => p.id === pair.p1);
+      const p2 = state.players.find(p => p.id === pair.p2);
+      const s1 = p1 ? getPlayerStats(p1.id) : null;
+      const s2 = p2 ? getPlayerStats(p2.id) : null;
+      const rec = p => p ? `${p.name} (${getPlayerStats(p.id).wins}W–${getPlayerStats(p.id).losses}L)` : '?';
+      html += `<tr class="print-pairing-row">
+        <td class="print-pairing-num">${i+1}</td>
+        <td>${rec(p1)}</td>
+        <td class="print-vs">vs</td>
+        <td>${rec(p2)}</td>
+      </tr>`;
+    });
+  }
+
+  html += `</tbody></table>`;
+
+  if (byes.length > 0) {
+    html += `<div class="print-bye-box">
+      <strong>Bye${byes.length > 1 ? 's' : ''}:</strong> ${byes.map(p => {
+        const s = getPlayerStats(p.id);
+        return `${p.name} (${s.wins}W–${s.losses}L)`;
+      }).join(', ')}
+    </div>`;
+  }
+
+  html += `</div>`;
+  return html;
+}
+
+function buildMatchHistory() {
+  const rounds = [...new Set(state.matches.filter(m=>!m.isBye).map(m=>m.round))].sort((a,b)=>a-b);
+  let html = `<div class="print-page">
+    ${buildPrintHeader('Match History')}
+    <div class="print-section-title">Match History</div>`;
+
+  if (rounds.length === 0) {
+    html += `<p style="color:#888;font-style:italic;">No matches recorded.</p>`;
+  }
+
+  rounds.forEach(round => {
+    const phase = getPhaseForRound(round);
+    const matches = state.matches.filter(m => m.round === round && !m.isBye);
+    html += `<div style="margin-bottom:12pt;">
+      <div style="font-weight:bold;font-size:10pt;margin-bottom:3pt;">Round ${round} &nbsp;·&nbsp; Phase ${phase}</div>
+      <table class="print-table"><thead><tr>
+        <th>Player 1</th><th>VP</th><th>SP</th><th>Result</th><th>SP</th><th>VP</th><th>Player 2</th>
+      </tr></thead><tbody>`;
+    matches.forEach(m => {
+      const p1 = state.players.find(p => p.id === m.p1);
+      const p2 = state.players.find(p => p.id === m.p2);
+      html += `<tr>
+        <td>${p1?.name||'?'}</td>
+        <td>${m.p1vp}</td><td>${m.p1sp}</td>
+        <td style="text-align:center;font-weight:bold;">${m.p1result.toUpperCase()} / ${m.p2result.toUpperCase()}</td>
+        <td>${m.p2sp}</td><td>${m.p2vp}</td>
+        <td>${p2?.name||'?'}</td>
+      </tr>`;
+    });
+    html += `</tbody></table></div>`;
+  });
+
+  html += `</div>`;
+  return html;
+}
+
+function assemblePrintDoc(sections) {
+  return `<div style="background:#fff;color:#000;">
+    ${buildPrintFooter()}
+    ${sections.join('\n')}
+  </div>`;
+}
+
+function runFullPrint() {
+  const sections = [];
+  if (document.getElementById('pc-cover').checked)     sections.push(buildCoverPage());
+  if (document.getElementById('pc-phases').checked)    sections.push(buildPhaseSummary());
+  if (document.getElementById('pc-rosters').checked)   sections.push(buildRosters());
+  if (document.getElementById('pc-standings').checked) sections.push(buildIndividualStandings());
+  if (document.getElementById('pc-pairings').checked && (state.pendingPairings||[]).length > 0)
+                                                        sections.push(buildPairingsSection());
+  if (document.getElementById('pc-history').checked)   sections.push(buildMatchHistory());
+
+  if (sections.length === 0) { toast('Select at least one section to print.'); return; }
+  triggerPrint(sections);
+}
+
+function quickPrintPairings() {
+  if (!state.pendingPairings || state.pendingPairings.length === 0) {
+    toast('Generate pairings first.');
+    return;
+  }
+  triggerPrint([buildPairingsSection()]);
+}
+
+function triggerPrint(sections) {
+  const render = document.getElementById('view-print-render');
+  render.innerHTML = assemblePrintDoc(sections);
+  render.style.display = 'block';
+  // Hide all other views temporarily
+  document.querySelectorAll('#main-app main .view:not(#view-print-render)').forEach(v => v.style.setProperty('display','none','important'));
+  window.print();
+  // Restore after print dialog closes
+  render.style.display = 'none';
+  document.querySelectorAll('#main-app main .view').forEach(v => v.style.removeProperty('display'));
+  document.querySelectorAll('#main-app main .view').forEach(v => {
+    if (v.id !== 'view-print-render') v.style.display = '';
+  });
+  // Re-show the active view
+  const active = document.querySelector('#main-app main .view.active');
+  if (active) active.style.display = 'block';
+}
+
+function renderPrintPreview() {
+  const hasPairings = (state.pendingPairings||[]).length > 0;
+  const el = document.getElementById('print-preview-summary');
+  if (!el) return;
+  el.innerHTML = [
+    `<span>☩</span> <strong>Cover Page</strong> — always included`,
+    document.getElementById('pc-phases')?.checked    ? `<span>☩</span> Phase Summary (${state.numPhases} phase${state.numPhases!==1?'s':''})` : null,
+    document.getElementById('pc-rosters')?.checked   ? `<span>☩</span> Rosters (${state.teams.length} team${state.teams.length!==1?'s':''},  ${state.players.length} players)` : null,
+    document.getElementById('pc-standings')?.checked ? `<span>☩</span> Individual Standings (${state.players.length} players)` : null,
+    document.getElementById('pc-pairings')?.checked  ? `<span>☩</span> Current Pairings — ${hasPairings ? `Round ${state.currentRound}, ${state.pendingPairings.length} matches` : 'none generated yet'}` : null,
+    document.getElementById('pc-history')?.checked   ? `<span>☩</span> Match History (${state.matches.filter(m=>!m.isBye).length} matches, ${[...new Set(state.matches.filter(m=>!m.isBye).map(m=>m.round))].length} rounds)` : null,
+  ].filter(Boolean).join('<br>');
+}
+
 
 function toast(msg) {
   const el = document.getElementById('toast');
