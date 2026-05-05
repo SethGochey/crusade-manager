@@ -277,7 +277,7 @@
       <div class="setup-hero">
         <div style="font-size:48px;color:var(--gold);margin-bottom:16px;">☩</div>
         <h1>Crusade Manager</h1>
-        <p>Track your Warhammer 40,000 Crusade campaign</p>
+        <p>Track your Warhammer 40,000 Crusade campaign or tournament</p>
       </div>
       <div class="ornament">✦ ✦ ✦</div>
 
@@ -286,13 +286,13 @@
 
         <div class="form-group">
           <label>Crusade Name</label>
-          <input id="setup-name" type="text" placeholder="e.g. The Siege of Damocles" value="The Siege of Damocles">
+          <input id="setup-name" type="text" placeholder="e.g. Armageddon" value="Armageddon">
         </div>
 
         <div class="form-row">
           <div class="form-group">
             <label>Number of Teams</label>
-            <input id="setup-teams" type="number" min="0" max="20" value="2" oninput="renderTeamNameInputs()">
+            <input id="setup-teams" type="number" min="0" max="20" value="3" oninput="renderTeamNameInputs()">
             <div style="font-size:11px;color:var(--text-dim);margin-top:4px;">Set to 0 for an individual (no-team) tournament</div>
           </div>
           <div class="form-group">
@@ -595,11 +595,11 @@
     <h3>Add Player</h3>
     <div class="form-group">
       <label>Player Name</label>
-      <input id="ap-name" type="text" placeholder="Sgt. Merrick">
+      <input id="ap-name" type="text" placeholder="Freddie">
     </div>
     <div class="form-group">
-      <label>Faction / Army</label>
-      <input id="ap-faction" type="text" placeholder="Space Marines — Ultramarines">
+      <label>Faction - Army</label>
+      <input id="ap-faction" type="text" placeholder="Space Marines — Fire Hawks">
     </div>
     <div class="form-group" id="ap-team-row">
       <label>Assign to Team</label>
@@ -831,7 +831,7 @@ function renderTeamNameInputs() {
   }
   let html = `<div style="font-size:12px;color:var(--text-muted);font-family:'Cinzel',serif;letter-spacing:0.05em;margin-bottom:8px;">TEAM NAMES</div>`;
   html += `<div class="form-row${n > 2 ? '-3' : ''}">`;
-  const defaultNames = ['Team Alpha','Team Beta','Team Gamma','Team Delta','Team Epsilon','Team Zeta','Team Eta','Team Theta'];
+  const defaultNames = ['Gatebreakers','Desecrators','Marauders','Team Delta','Team Epsilon','Team Zeta','Team Eta','Team Theta'];
   for (let i = 0; i < n; i++) {
     const def = defaultNames[i] || `Team ${i+1}`;
     html += `<div class="form-group"><label>Team ${i+1}</label><input id="team-name-${i}" type="text" placeholder="${def}" value="${def}"></div>`;
