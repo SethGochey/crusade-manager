@@ -466,6 +466,12 @@
           </div>
         </div>
         <div id="pairings-method-info" class="alert alert-info" style="margin-bottom:16px;"></div>
+        <div id="pairings-intra-team-row" style="margin-bottom:14px;">
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-family:'Crimson Pro',serif;font-size:15px;">
+            <input type="checkbox" id="pairing-allow-intrateam" checked style="width:15px;height:15px;">
+            <span>Allow intra-team pairings <span style="color:var(--text-muted);font-size:12px;">(uncheck to prevent teammates from being paired against each other)</span></span>
+          </label>
+        </div>
         <div id="pairings-container"></div>
         <div id="pairings-byes"></div>
       </div>
@@ -567,6 +573,11 @@
                 <input type="checkbox" id="pc-history" style="width:16px;height:16px;" onchange="renderPrintPreview()">
                 Match History
                 <span style="color:var(--text-muted);font-size:12px;">All matches grouped by round (can be long)</span>
+              </label>
+              <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-family:'Crimson Pro',serif;font-size:15px;">
+                <input type="checkbox" id="pc-scoresheet" style="width:16px;height:16px;" onchange="renderPrintPreview()">
+                Round Scoresheet
+                <span style="color:var(--text-muted);font-size:12px;">All rounds with write-in space — completed rounds pre-filled, future rounds blank</span>
               </label>
             </div>
           </div>
@@ -950,13 +961,19 @@ function getTeamSP(teamId, phase) {
   const { start, end } = getPhaseRoundRange(phase);
   let sp = 0, matchesPlayed = 0;
   state.matches.forEach(m => {
-    if (m.round >= start && m.round <= end) {
+    if (m.round >= start && m.round <= end && !m.isBye) {
       const p1 = state.players.find(p => p.id === m.p1);
       const p2 = m.p2 === '__BYE__' ? null : state.players.find(p => p.id === m.p2);
       const p1inTeam = p1 && p1.teamId === teamId;
       const p2inTeam = p2 && p2.teamId === teamId;
-      if (p1inTeam) { sp += m.p1sp; if (!m.isBye) matchesPlayed++; }
-      if (p2inTeam) { sp += m.p2sp; if (!m.isBye) matchesPlayed++; }
+      // Cross-team = the two players are on different teams (or one has no team)
+      const isCrossTeam = !(p1inTeam && p2inTeam);
+      if (p1inTeam) { sp += m.p1sp; if (isCrossTeam) matchesPlayed++; }
+      if (p2inTeam) { sp += m.p2sp; if (isCrossTeam) matchesPlayed++; }
+    } else if (m.isBye) {
+      // Bye SP counts toward team SP, never toward matchesPlayed
+      const p1 = state.players.find(p => p.id === m.p1);
+      if (p1 && p1.teamId === teamId) sp += m.p1sp;
     }
   });
   return { sp, matchesPlayed };
@@ -972,12 +989,46 @@ function getTeamPhaseScore(teamId, phase) {
 }
 
 function getPhaseWinner(phase) {
-  let maxScore = -1, winner = null;
+  if (state.teams.length === 0) return null;
+  let maxScore = -Infinity, winners = [];
   state.teams.forEach(t => {
     const { score } = getTeamPhaseScore(t.id, phase);
-    if (score > maxScore) { maxScore = score; winner = t; }
+    if (score > maxScore) { maxScore = score; winners = [t]; }
+    else if (score === maxScore) { winners.push(t); }
   });
-  return winner;
+  // Tie = no winner
+  return winners.length === 1 ? winners[0] : null;
+}
+
+// Called when currentRound has passed the final phase
+function getCrusadeWinner() {
+  if (state.teams.length === 0) return null;
+  const lastPhase = state.numPhases;
+  if (getCurrentPhase() <= lastPhase) return null; // not finished
+
+  const totals = state.teams.map(t => {
+    let totalSP = 0, totalMatches = 0;
+    for (let p = 1; p <= lastPhase; p++) {
+      const { sp, matchesPlayed } = getTeamSP(t.id, p);
+      totalSP += sp;
+      totalMatches += matchesPlayed;
+    }
+    const score = (state.spMethod === 'per_match' && totalMatches > 0)
+      ? totalSP / totalMatches : totalSP;
+    const phasesWon = Array.from({length: lastPhase}, (_,i) => i+1)
+      .filter(p => { const w = getPhaseWinner(p); return w && w.id === t.id; }).length;
+    return { team: t, score, phasesWon };
+  });
+
+  let maxScore = Math.max(...totals.map(t => t.score));
+  let leaders = totals.filter(t => t.score === maxScore);
+  if (leaders.length === 1) return { winner: leaders[0].team, reason: 'SP total' };
+
+  let maxPhases = Math.max(...leaders.map(t => t.phasesWon));
+  leaders = leaders.filter(t => t.phasesWon === maxPhases);
+  if (leaders.length === 1) return { winner: leaders[0].team, reason: 'phases won' };
+
+  return { winner: null, reason: 'draw' };
 }
 
 // ─── Render Phase Bar ─────────────────────────────────────────────────────────
@@ -993,12 +1044,24 @@ function renderPhaseBar() {
     if (isCurrent) cls += ' current';
     if (isComplete) cls += ' complete';
     const winner = isComplete ? getPhaseWinner(p) : null;
+    const phaseTied = isComplete && !winner && state.teams.length > 0;
     html += `<div class="${cls}">
       <div>Phase ${p} — Rounds ${start}–${end}</div>
       ${winner ? `<div class="phase-winner">✦ ${winner.name}</div>` : ''}
+      ${phaseTied ? `<div class="phase-winner" style="color:var(--text-muted);">— Tied</div>` : ''}
     </div>`;
   }
-  document.getElementById('phase-bar').innerHTML = html;
+  // Crusade complete banner
+  const crusadeResult = getCrusadeWinner();
+  if (crusadeResult) {
+    const { winner, reason } = crusadeResult;
+    const banner = winner
+      ? `<div class="alert alert-success" style="margin-top:12px;font-family:'Cinzel',serif;font-size:13px;">☩ &nbsp;<strong>Crusade Complete</strong> — ${winner.name} wins (${reason})</div>`
+      : `<div class="alert alert-warn" style="margin-top:12px;font-family:'Cinzel',serif;font-size:13px;">☩ &nbsp;<strong>Crusade Complete</strong> — The campaign ends in a draw</div>`;
+    document.getElementById('phase-bar').innerHTML = html + banner;
+  } else {
+    document.getElementById('phase-bar').innerHTML = html;
+  }
 }
 
 // ─── Overview ─────────────────────────────────────────────────────────────────
@@ -1266,10 +1329,12 @@ function generatePairings() {
   const nextRound = state.currentRound;
   let pairs, byes = [];
 
+  const allowIntraTeam = state.numTeams === 0 ||
+    document.getElementById('pairing-allow-intrateam')?.checked !== false;
   if (state.pairing === 'winpath') {
-    ({ pairs, byes } = generateWinPathPairings(nextRound));
+    ({ pairs, byes } = generateWinPathPairings(nextRound, allowIntraTeam));
   } else {
-    ({ pairs, byes } = generateRoundRobinPairings(nextRound));
+    ({ pairs, byes } = generateRoundRobinPairings(nextRound, allowIntraTeam));
   }
 
   state.pendingPairings = pairs.map(([a, b]) => ({ p1: a.id, p2: b.id }));
@@ -1278,7 +1343,7 @@ function generatePairings() {
   renderPairings();
 }
 
-function generateRoundRobinPairings(round) {
+function generateRoundRobinPairings(round, allowIntraTeam = true) {
   const players = [...state.players];
   const n = players.length;
   if (n === 0) return { pairs: [], byes: [] };
@@ -1310,15 +1375,22 @@ function generateRoundRobinPairings(round) {
 
   while (remaining.length >= 2) {
     const a = remaining.shift();
-    // Find best opponent: prefer unplayed, then closest in win-path order (already sorted)
+    // Find best opponent: prefer unplayed + cross-team, then relax constraints
+    const sameTeam = (x, y) => !allowIntraTeam && x.teamId && x.teamId === y.teamId;
     let bestIdx = -1;
-    // First pass: find first unplayed opponent
-    if (!state.allowRematches) {
-      for (let i = 0; i < remaining.length; i++) {
-        if (!hasPlayed(a, remaining[i])) { bestIdx = i; break; }
+    // First pass: unplayed AND cross-team
+    for (let i = 0; i < remaining.length; i++) {
+      if (!sameTeam(a, remaining[i]) && (state.allowRematches || !hasPlayed(a, remaining[i]))) {
+        bestIdx = i; break;
       }
     }
-    // If all played or rematches allowed, take the first in sorted order
+    // Second pass: if all cross-team options are exhausted, allow intra-team
+    if (bestIdx === -1 && !allowIntraTeam) {
+      for (let i = 0; i < remaining.length; i++) {
+        if (state.allowRematches || !hasPlayed(a, remaining[i])) { bestIdx = i; break; }
+      }
+    }
+    // Final fallback: take first available
     if (bestIdx === -1) bestIdx = 0;
     const b = remaining.splice(bestIdx, 1)[0];
     pairs.push([a, b]);
@@ -1328,7 +1400,7 @@ function generateRoundRobinPairings(round) {
   return { pairs, byes };
 }
 
-function generateWinPathPairings(round) {
+function generateWinPathPairings(round, allowIntraTeam = true) {
   const players = [...state.players];
 
   // Group by win-loss record (wins desc, losses asc)
@@ -1380,7 +1452,16 @@ function generateWinPathPairings(round) {
         dropDown = lowest;
       }
       for (let i = 0; i < sorted.length; i += 2) {
-        if (sorted[i+1]) pairs.push([sorted[i], sorted[i+1]]);
+        if (sorted[i+1]) {
+          const a = sorted[i], b = sorted[i+1];
+          if (!allowIntraTeam && a.teamId && a.teamId === b.teamId) {
+            // Intra-team pair blocked — treat both as drop-downs
+            // Push lower-OGW one as dropDown for next group, other stays unpaired this pass
+            if (!dropDown) dropDown = b; else byes.push(b);
+          } else {
+            pairs.push([a, b]);
+          }
+        }
       }
     });
   });
@@ -1392,6 +1473,9 @@ function generateWinPathPairings(round) {
 function renderPairings() {
   const nextRound = state.currentRound;
   document.getElementById('next-round-num').textContent = nextRound;
+  // Show/hide intra-team checkbox (hidden in individual tournaments)
+  const intraRow = document.getElementById('pairings-intra-team-row');
+  if (intraRow) intraRow.style.display = state.numTeams === 0 ? 'none' : '';
   document.getElementById('pairings-method-info').textContent =
     state.pairing === 'winpath'
       ? `Win Path pairing: players are grouped by record, then win/loss sequence, then tiebroken by Opponent Game Win%. Players dropping from odd groups fall to the next bracket.`
@@ -1936,6 +2020,150 @@ function buildMatchHistory() {
   return html;
 }
 
+function buildScoresheet() {
+  const rpp = getRoundsPerPhase();
+  const totalRounds = state.numPhases * rpp;
+  const matchesPerRound = Math.floor(state.players.length / 2);
+  const rowsPerRound = matchesPerRound + 1; // +1 for bye or overflow
+
+  const matchesByRound = {};
+  state.matches.filter(m => !m.isBye).forEach(m => {
+    if (!matchesByRound[m.round]) matchesByRound[m.round] = [];
+    matchesByRound[m.round].push(m);
+  });
+
+  const pendingByRound = {};
+  if (state.pendingPairings && state.pendingPairings.length > 0) {
+    pendingByRound[state.currentRound] = state.pendingPairings;
+  }
+
+  const byesByRound = {};
+  state.matches.filter(m => m.isBye).forEach(m => {
+    if (!byesByRound[m.round]) byesByRound[m.round] = [];
+    const p = state.players.find(pl => pl.id === m.p1);
+    if (p && !byesByRound[m.round].includes(p.name)) byesByRound[m.round].push(p.name);
+  });
+  if (state.pendingByes && state.pendingByes.length > 0) {
+    if (!byesByRound[state.currentRound]) byesByRound[state.currentRound] = [];
+    state.pendingByes.forEach(id => {
+      const p = state.players.find(pl => pl.id === id);
+      if (p && !byesByRound[state.currentRound].includes(p.name))
+        byesByRound[state.currentRound].push(p.name);
+    });
+  }
+
+  const checkCell = '<span style="font-size:13pt;">&#9744;</span>';
+  const filledCheck = '<span style="font-size:13pt;">&#9745;</span>';
+
+  const colgroup = `<colgroup>
+    <col style="width:22pt"><col><col style="width:24pt"><col style="width:30pt"><col style="width:30pt">
+    <col style="width:8pt"><col style="width:30pt"><col style="width:30pt"><col style="width:24pt"><col>
+  </colgroup>`;
+
+  const thead = `<thead><tr>
+    <th style="text-align:center;">#</th>
+    <th>Player 1</th>
+    <th style="text-align:center;">Win</th>
+    <th style="text-align:center;">VP</th>
+    <th style="text-align:center;">SP</th>
+    <th style="text-align:center;border-left:none;border-right:none;"></th>
+    <th style="text-align:center;">SP</th>
+    <th style="text-align:center;">VP</th>
+    <th style="text-align:center;">Win</th>
+    <th>Player 2</th>
+  </tr></thead>`;
+
+  function blankRow(i) {
+    return `<tr style="height:18pt;">
+      <td style="text-align:center;color:#bbb;">${i}</td>
+      <td></td><td style="text-align:center;">${checkCell}</td>
+      <td></td><td></td>
+      <td style="text-align:center;color:#ccc;border-left:none;border-right:none;">|</td>
+      <td></td><td></td>
+      <td style="text-align:center;">${checkCell}</td>
+      <td></td>
+    </tr>`;
+  }
+
+  function byeRow(names) {
+    return `<tr style="height:18pt;"><td style="text-align:center;">&#8212;</td>
+      <td colspan="9" style="color:#555;font-style:italic;">Bye: ${names.join(', ')}</td></tr>`;
+  }
+
+  let html = `<div class="print-page">
+    ${buildPrintHeader('Round Scoresheet')}
+    <div class="print-section-title">Round Scoresheet</div>`;
+
+  let pageRoundCount = 0;
+
+  for (let round = 1; round <= totalRounds; round++) {
+    const phase = getPhaseForRound(round);
+    const completed = matchesByRound[round] || [];
+    const pending = pendingByRound[round] || [];
+    const byes = byesByRound[round] || [];
+    const isComplete = completed.length > 0;
+    const isPending = !isComplete && pending.length > 0;
+
+    let rows = '';
+
+    if (isComplete) {
+      completed.forEach((m, i) => {
+        const p1 = state.players.find(p => p.id === m.p1);
+        const p2 = state.players.find(p => p.id === m.p2);
+        const p1win = m.p1result === 'win', p2win = m.p2result === 'win';
+        rows += `<tr style="height:18pt;">
+          <td style="text-align:center;">${i+1}</td>
+          <td>${p1?.name||'?'}</td>
+          <td style="text-align:center;">${p1win ? filledCheck : checkCell}</td>
+          <td style="text-align:center;">${m.p1vp}</td>
+          <td style="text-align:center;">${m.p1sp}</td>
+          <td style="text-align:center;color:#ccc;border-left:none;border-right:none;">|</td>
+          <td style="text-align:center;">${m.p2sp}</td>
+          <td style="text-align:center;">${m.p2vp}</td>
+          <td style="text-align:center;">${p2win ? filledCheck : checkCell}</td>
+          <td>${p2?.name||'?'}</td>
+        </tr>`;
+      });
+      rows += byes.length > 0 ? byeRow(byes) : blankRow(completed.length + 1);
+    } else if (isPending) {
+      pending.forEach((pair, i) => {
+        const p1 = state.players.find(p => p.id === pair.p1);
+        const p2 = state.players.find(p => p.id === pair.p2);
+        rows += `<tr style="height:18pt;">
+          <td style="text-align:center;">${i+1}</td>
+          <td>${p1?.name||'?'}</td>
+          <td style="text-align:center;">${checkCell}</td>
+          <td></td><td></td>
+          <td style="text-align:center;color:#ccc;border-left:none;border-right:none;">|</td>
+          <td></td><td></td>
+          <td style="text-align:center;">${checkCell}</td>
+          <td>${p2?.name||'?'}</td>
+        </tr>`;
+      });
+      rows += byes.length > 0 ? byeRow(byes) : blankRow(pending.length + 1);
+    } else {
+      for (let i = 1; i <= rowsPerRound; i++) rows += blankRow(i);
+    }
+
+    html += `<div style="margin-bottom:10pt;page-break-inside:avoid;">
+      <div style="font-weight:bold;font-size:10pt;margin-bottom:2pt;display:flex;justify-content:space-between;">
+        <span>Round ${round} &nbsp;&middot;&nbsp; Phase ${phase}</span>
+        <span style="font-weight:normal;font-size:9pt;color:#666;">${isComplete ? 'Completed' : isPending ? 'Pairings Set' : 'Upcoming'}</span>
+      </div>
+      <table class="print-table" style="font-size:9pt;">${colgroup}${thead}<tbody>${rows}</tbody></table>
+    </div>`;
+
+    pageRoundCount++;
+    if (pageRoundCount === 3 && round < totalRounds) {
+      html += `<div style="page-break-after:always;"></div>${buildPrintHeader('Round Scoresheet (cont.)')}<div class="print-section-title">Round Scoresheet</div>`;
+      pageRoundCount = 0;
+    }
+  }
+
+  html += '</div>';
+  return html;
+}
+
 function assemblePrintDoc(sections) {
   return `<div style="background:#fff;color:#000;">
     ${buildPrintFooter()}
@@ -1952,6 +2180,7 @@ function runFullPrint() {
   if (document.getElementById('pc-pairings').checked && (state.pendingPairings||[]).length > 0)
                                                         sections.push(buildPairingsSection());
   if (document.getElementById('pc-history').checked)   sections.push(buildMatchHistory());
+  if (document.getElementById('pc-scoresheet').checked) sections.push(buildScoresheet());
 
   if (sections.length === 0) { toast('Select at least one section to print.'); return; }
   triggerPrint(sections);
@@ -1994,6 +2223,7 @@ function renderPrintPreview() {
     document.getElementById('pc-standings')?.checked ? `<span>☩</span> Individual Standings (${state.players.length} players)` : null,
     document.getElementById('pc-pairings')?.checked  ? `<span>☩</span> Current Pairings — ${hasPairings ? `Round ${state.currentRound}, ${state.pendingPairings.length} matches` : 'none generated yet'}` : null,
     document.getElementById('pc-history')?.checked   ? `<span>☩</span> Match History (${state.matches.filter(m=>!m.isBye).length} matches, ${[...new Set(state.matches.filter(m=>!m.isBye).map(m=>m.round))].length} rounds)` : null,
+    document.getElementById('pc-scoresheet')?.checked ? `<span>☩</span> Round Scoresheet (${state.numPhases * getRoundsPerPhase()} rounds, ${Math.floor(state.players.length/2)+1} rows each)` : null,
   ].filter(Boolean).join('<br>');
 }
 
