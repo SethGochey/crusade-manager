@@ -267,12 +267,8 @@
         <div class="form-row">
           <div class="form-group">
             <label>Number of Teams</label>
-            <select id="setup-teams">
-              <option value="2" selected>2 Teams</option>
-              <option value="3">3 Teams</option>
-              <option value="4">4 Teams</option>
-              <option value="5">5 Teams</option>
-            </select>
+            <input id="setup-teams" type="number" min="0" max="20" value="2" oninput="renderTeamNameInputs()">
+            <div style="font-size:11px;color:var(--text-dim);margin-top:4px;">Set to 0 for an individual (no-team) tournament</div>
           </div>
           <div class="form-group">
             <label>Pairing Method</label>
@@ -313,12 +309,15 @@
           </div>
           <div class="form-group">
             <label>Number of Phases</label>
-            <select id="setup-phases" onchange="updateSetupDefaults()">
-              <option value="3" selected>3 Phases</option>
-              <option value="2">2 Phases</option>
-              <option value="4">4 Phases</option>
-            </select>
+            <input id="setup-phases" type="number" min="1" max="20" value="3" oninput="updateSetupDefaults()">
           </div>
+        </div>
+        <div class="form-group">
+          <label>Phase Victory Method</label>
+          <select id="setup-spmethod">
+            <option value="raw">Raw SP Total — team with the most Strategic Points wins the phase</option>
+            <option value="per_match">SP per Match Played — balances teams with unequal player counts</option>
+          </select>
         </div>
 
         <div id="team-name-inputs" style="margin-top:8px;"></div>
@@ -472,6 +471,18 @@
                 <label>Rounds Per Phase</label>
                 <input id="settings-rpp" type="number" min="1" oninput="updateSettings()">
               </div>
+              <div class="form-group">
+                <label>Number of Phases</label>
+                <input id="settings-phases" type="number" min="1" max="20" oninput="updateSettings()">
+              </div>
+              <div class="form-group" id="settings-spmethod-row">
+                <label>Phase Victory Method</label>
+                <select id="settings-spmethod" onchange="updateSettings()">
+                  <option value="raw">Raw SP Total</option>
+                  <option value="per_match">SP per Match Played</option>
+                </select>
+                <div style="font-size:11px;color:var(--text-dim);margin-top:4px;" id="settings-spmethod-hint"></div>
+              </div>
             </div>
           </div>
           <div>
@@ -506,7 +517,7 @@
       <label>Faction / Army</label>
       <input id="ap-faction" type="text" placeholder="Space Marines — Ultramarines">
     </div>
-    <div class="form-group">
+    <div class="form-group" id="ap-team-row">
       <label>Assign to Team</label>
       <select id="ap-team"></select>
     </div>
@@ -665,12 +676,12 @@ function load() {
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', () => {
-  if (load() && state && state.teams && state.teams.length > 0) {
+  if (load() && state && state.name) {
     showApp();
   } else {
     showSetup();
   }
-  document.getElementById('setup-teams').addEventListener('change', renderTeamNameInputs);
+  document.getElementById('setup-teams').addEventListener('input', renderTeamNameInputs);
   document.getElementById('setup-playercount').addEventListener('input', updateSetupDefaults);
   renderTeamNameInputs();
   updateSetupDefaults();
@@ -726,13 +737,20 @@ function updateSetupDefaults() {
   if (sec) sec.style.display = pairing === 'winpath' ? 'none' : 'block';
 }
 function renderTeamNameInputs() {
-  const n = parseInt(document.getElementById('setup-teams').value);
+  const n = parseInt(document.getElementById('setup-teams').value) || 0;
   const el = document.getElementById('team-name-inputs');
+  if (n === 0) {
+    el.innerHTML = `<div class="alert alert-info">
+      <strong>Individual Tournament</strong> — players will not be assigned to teams. SP tracking, phase winners, and standings will be individual rather than team-based.
+    </div>`;
+    return;
+  }
   let html = `<div style="font-size:12px;color:var(--text-muted);font-family:'Cinzel',serif;letter-spacing:0.05em;margin-bottom:8px;">TEAM NAMES</div>`;
   html += `<div class="form-row${n > 2 ? '-3' : ''}">`;
-  const defaultNames = ['Team Alpha','Team Beta','Team Gamma','Team Delta','Team Epsilon'];
+  const defaultNames = ['Team Alpha','Team Beta','Team Gamma','Team Delta','Team Epsilon','Team Zeta','Team Eta','Team Theta'];
   for (let i = 0; i < n; i++) {
-    html += `<div class="form-group"><label>Team ${i+1}</label><input id="team-name-${i}" type="text" placeholder="${defaultNames[i]}" value="${defaultNames[i]}"></div>`;
+    const def = defaultNames[i] || `Team ${i+1}`;
+    html += `<div class="form-group"><label>Team ${i+1}</label><input id="team-name-${i}" type="text" placeholder="${def}" value="${def}"></div>`;
   }
   html += '</div>';
   el.innerHTML = html;
@@ -759,10 +777,11 @@ function beginCrusade() {
   } else {
     state.roundsPerPhase = calcDefaultRoundsPerPhase(setupPlayerCount || 8, numPhases, pairing);
   }
+  state.spMethod = document.getElementById('setup-spmethod').value || 'raw';
 
   for (let i = 0; i < numTeams; i++) {
     const teamName = (document.getElementById(`team-name-${i}`)?.value.trim()) || `Team ${i+1}`;
-    state.teams.push({ id: 't'+i, name: teamName, color: TEAM_COLORS[i] });
+    state.teams.push({ id: 't'+i, name: teamName, color: TEAM_COLORS[i % TEAM_COLORS.length] });
   }
 
   save();
@@ -845,23 +864,34 @@ function getWinPathKey(playerId) {
 // ─── SP Tracking ─────────────────────────────────────────────────────────────
 function getTeamSP(teamId, phase) {
   const { start, end } = getPhaseRoundRange(phase);
-  let sp = 0;
+  let sp = 0, matchesPlayed = 0;
   state.matches.forEach(m => {
     if (m.round >= start && m.round <= end) {
       const p1 = state.players.find(p => p.id === m.p1);
       const p2 = m.p2 === '__BYE__' ? null : state.players.find(p => p.id === m.p2);
-      if (p1 && p1.teamId === teamId) sp += m.p1sp;
-      if (p2 && p2.teamId === teamId) sp += m.p2sp;
+      const p1inTeam = p1 && p1.teamId === teamId;
+      const p2inTeam = p2 && p2.teamId === teamId;
+      if (p1inTeam) { sp += m.p1sp; if (!m.isBye) matchesPlayed++; }
+      if (p2inTeam) { sp += m.p2sp; if (!m.isBye) matchesPlayed++; }
     }
   });
-  return sp;
+  return { sp, matchesPlayed };
+}
+
+// Returns the score used for phase winner comparison (raw SP or SP/match)
+function getTeamPhaseScore(teamId, phase) {
+  const { sp, matchesPlayed } = getTeamSP(teamId, phase);
+  if (state.spMethod === 'per_match' && matchesPlayed > 0) {
+    return { score: sp / matchesPlayed, sp, matchesPlayed, label: (sp / matchesPlayed).toFixed(2) + ' SP/M' };
+  }
+  return { score: sp, sp, matchesPlayed, label: sp + ' SP' };
 }
 
 function getPhaseWinner(phase) {
-  let maxSP = -1, winner = null;
+  let maxScore = -1, winner = null;
   state.teams.forEach(t => {
-    const sp = getTeamSP(t.id, phase);
-    if (sp > maxSP) { maxSP = sp; winner = t; }
+    const { score } = getTeamPhaseScore(t.id, phase);
+    if (score > maxScore) { maxScore = score; winner = t; }
   });
   return winner;
 }
@@ -890,12 +920,8 @@ function renderPhaseBar() {
 // ─── Overview ─────────────────────────────────────────────────────────────────
 function renderOverviewStats() {
   const currentPhase = getCurrentPhase();
-  const totalMatches = state.matches.length;
+  const totalMatches = state.matches.filter(m => !m.isBye).length;
   const totalPlayers = state.players.length;
-  const phaseSPs = state.teams.map(t => ({
-    team: t, sp: getTeamSP(t.id, currentPhase)
-  })).sort((a,b) => b.sp - a.sp);
-  const leadingTeam = phaseSPs[0];
 
   document.getElementById('overview-stats').innerHTML = `
     <div class="stat-box"><div class="val">${state.currentRound}</div><div class="lbl">Current Round</div></div>
@@ -907,24 +933,45 @@ function renderOverviewStats() {
 
 function renderOverviewStandings() {
   const currentPhase = getCurrentPhase();
+  const spPerMatch = state.spMethod === 'per_match';
+  const el = document.getElementById('overview-standings-table');
+
+  if (state.numTeams === 0 || state.teams.length === 0) {
+    // Individual mode: show top players by W/L
+    const rows = state.players.map(p => {
+      const stats = getPlayerStats(p.id);
+      return { p, stats, ogw: getOGW(p.id) };
+    }).sort((a,b) => b.stats.wins - a.stats.wins || b.ogw - a.ogw);
+    el.innerHTML = `
+      <thead><tr><th>Player</th><th>W</th><th>L</th><th>OGW%</th></tr></thead>
+      <tbody>${rows.map(r => `<tr>
+        <td>${r.p.name}</td>
+        <td class="result-win td-center">${r.stats.wins}</td>
+        <td class="result-loss td-center">${r.stats.losses}</td>
+        <td class="td-center">${(r.ogw*100).toFixed(1)}%</td>
+      </tr>`).join('')}</tbody>`;
+    return;
+  }
+
   const rows = state.teams.map(t => {
-    const sp = getTeamSP(t.id, currentPhase);
+    const { score, sp, matchesPlayed, label } = getTeamPhaseScore(t.id, currentPhase);
     const phasesWon = [];
     for (let p = 1; p < currentPhase; p++) {
       const w = getPhaseWinner(p);
       if (w && w.id === t.id) phasesWon.push(p);
     }
-    return { team: t, sp, phasesWon };
-  }).sort((a,b) => b.sp - a.sp);
+    return { team: t, score, sp, matchesPlayed, label, phasesWon };
+  }).sort((a,b) => b.score - a.score);
 
-  document.getElementById('overview-standings-table').innerHTML = `
+  const colHeader = spPerMatch ? `SP/Match (Phase ${currentPhase})` : `SP (Phase ${currentPhase})`;
+  el.innerHTML = `
     <thead><tr>
-      <th>Team</th><th>SP (Phase ${currentPhase})</th><th>Phases Won</th>
+      <th>Team</th><th>${colHeader}</th><th>Phases Won</th>
     </tr></thead>
     <tbody>
-    ${rows.map((r,i) => `<tr>
+    ${rows.map(r => `<tr>
       <td><span class="team-badge" style="background:${r.team.color}"></span>${r.team.name}</td>
-      <td><strong>${r.sp}</strong></td>
+      <td><strong>${r.label}</strong>${spPerMatch ? `<span style="color:var(--text-dim);font-size:11px;margin-left:6px;">(${r.sp} SP, ${r.matchesPlayed} M)</span>` : ''}</td>
       <td>${r.phasesWon.length > 0 ? r.phasesWon.map(p=>`<span class="tag tag-phase">Phase ${p}</span>`).join(' ') : '<span style="color:var(--text-dim)">—</span>'}</td>
     </tr>`).join('')}
     </tbody>
@@ -956,12 +1003,32 @@ function renderRecentMatches() {
 // ─── Teams ────────────────────────────────────────────────────────────────────
 function renderTeams() {
   const grid = document.getElementById('teams-grid');
-  if (state.teams.length === 0) { grid.innerHTML = '<div class="empty-state">No teams configured.</div>'; return; }
+  if (state.numTeams === 0 || state.teams.length === 0) {
+    // Individual tournament — show all players in a single roster card
+    const players = state.players;
+    grid.innerHTML = `<div class="card">
+      <div class="card-header"><span class="card-title">Individual Roster</span><span style="color:var(--text-muted);font-size:12px;">${players.length} player${players.length!==1?'s':''}</span></div>
+      ${players.length === 0 ? '<div class="empty-state">No players enlisted yet.</div>' :
+        `<table><thead><tr><th>Player</th><th>Faction</th><th>W</th><th>L</th><th>Actions</th></tr></thead><tbody>` +
+        players.map(p => {
+          const stats = getPlayerStats(p.id);
+          return `<tr>
+            <td>${p.name}</td>
+            <td style="color:var(--text-muted);font-style:italic;">${p.faction||'—'}</td>
+            <td class="result-win td-center">${stats.wins}</td>
+            <td class="result-loss td-center">${stats.losses}</td>
+            <td><button class="btn btn-sm btn-ghost" onclick="openEditPlayer('${p.id}')">✎</button>
+                <button class="btn btn-sm btn-danger" onclick="removePlayer('${p.id}')">✕</button></td>
+          </tr>`;
+        }).join('') + `</tbody></table>`}
+    </div>`;
+    return;
+  }
   grid.innerHTML = `<div class="grid-${Math.min(state.teams.length, 3)}">` +
     state.teams.map(team => {
       const players = state.players.filter(p => p.teamId === team.id);
       const currentPhase = getCurrentPhase();
-      const teamSP = getTeamSP(team.id, currentPhase);
+      const { sp: teamSP } = getTeamSP(team.id, currentPhase);
       return `<div class="card">
         <div class="card-header">
           <div style="display:flex;align-items:center;gap:8px;">
@@ -1045,12 +1112,16 @@ function renderMatches() {
 
 // ─── Standings ────────────────────────────────────────────────────────────────
 function renderStandings() {
+  const spPerMatch = state.spMethod === 'per_match';
   // Phase team standings
   let phasesHtml = '';
   for (let p = 1; p <= state.numPhases; p++) {
     const currentPhase = getCurrentPhase();
     const { start, end } = getPhaseRoundRange(p);
-    const rows = state.teams.map(t => ({ team: t, sp: getTeamSP(t.id, p) })).sort((a,b)=>b.sp-a.sp);
+    const rows = state.teams.map(t => {
+      const { score, sp, matchesPlayed, label } = getTeamPhaseScore(t.id, p);
+      return { team: t, score, sp, matchesPlayed, label };
+    }).sort((a,b) => b.score - a.score);
     const winner = p < currentPhase ? getPhaseWinner(p) : null;
     phasesHtml += `<div class="card">
       <div class="card-header">
@@ -1058,14 +1129,22 @@ function renderStandings() {
         ${winner ? `<span class="stat-pill pill-win">✦ ${winner.name}</span>` : (p === currentPhase ? '<span class="stat-pill pill-gold">In Progress</span>' : '<span style="color:var(--text-dim);font-size:12px;">Upcoming</span>')}
       </div>
       <table>
-        <thead><tr><th>Team</th><th class="td-right">Strategic Points</th></tr></thead>
+        <thead><tr>
+          <th>Team</th>
+          <th class="td-right">SP</th>
+          <th class="td-right">Matches</th>
+          ${spPerMatch ? '<th class="td-right">SP / Match</th>' : ''}
+        </tr></thead>
         <tbody>
           ${rows.map(r => `<tr>
             <td><span class="team-badge" style="background:${r.team.color}"></span>${r.team.name}</td>
-            <td class="td-right"><strong>${r.sp}</strong></td>
+            <td class="td-right">${r.sp}</td>
+            <td class="td-right">${r.matchesPlayed}</td>
+            ${spPerMatch ? `<td class="td-right"><strong>${r.label}</strong></td>` : ''}
           </tr>`).join('')}
         </tbody>
       </table>
+      ${spPerMatch ? '<div style="font-size:11px;color:var(--text-muted);margin-top:8px;font-style:italic;">Phase winner determined by SP per match played.</div>' : ''}
     </div>`;
   }
   document.getElementById('standings-phases').innerHTML = `<div class="grid-${Math.min(state.numPhases,3)}">${phasesHtml}</div>`;
@@ -1300,6 +1379,13 @@ function renderSettings() {
   document.getElementById('settings-pairing').value = state.pairing;
   document.getElementById('settings-rematch').value = state.allowRematches ? '1' : '0';
   document.getElementById('settings-rpp').value = state.roundsPerPhase || '';
+  document.getElementById('settings-phases').value = state.numPhases || 3;
+  document.getElementById('settings-spmethod').value = state.spMethod || 'raw';
+  document.getElementById('settings-spmethod-row').style.display = state.numTeams === 0 ? 'none' : '';
+  const hint = document.getElementById('settings-spmethod-hint');
+  hint.textContent = (state.spMethod === 'per_match')
+    ? 'Phase winner = team with highest (total SP ÷ matches played). Levels the field when teams have different player counts.'
+    : 'Phase winner = team with the highest raw SP total.';
 }
 
 function updateSettings() {
@@ -1308,15 +1394,31 @@ function updateSettings() {
   state.allowRematches = document.getElementById('settings-rematch').value === '1';
   const rpp = document.getElementById('settings-rpp').value;
   state.roundsPerPhase = rpp ? parseInt(rpp) : null;
+  const phases = parseInt(document.getElementById('settings-phases').value);
+  if (phases >= 1) state.numPhases = phases;
+  state.spMethod = document.getElementById('settings-spmethod').value || 'raw';
+  const hint = document.getElementById('settings-spmethod-hint');
+  hint.textContent = (state.spMethod === 'per_match')
+    ? 'Phase winner = team with highest (total SP ÷ matches played). Levels the field when teams have different player counts.'
+    : 'Phase winner = team with the highest raw SP total.';
   save();
   document.getElementById('header-title').textContent = state.name;
   renderPhaseBar();
+  renderOverviewStandings();
+  renderStandings();
 }
 
 // ─── Modal: Add Player ────────────────────────────────────────────────────────
 function openAddPlayerModal() {
   const sel = document.getElementById('ap-team');
-  sel.innerHTML = state.teams.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+  const teamRow = document.getElementById('ap-team-row');
+  if (state.numTeams === 0) {
+    teamRow.style.display = 'none';
+    sel.innerHTML = '';
+  } else {
+    teamRow.style.display = '';
+    sel.innerHTML = state.teams.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+  }
   document.getElementById('ap-name').value = '';
   document.getElementById('ap-faction').value = '';
   openModal('modal-add-player');
@@ -1326,7 +1428,7 @@ function addPlayer() {
   const name = document.getElementById('ap-name').value.trim();
   if (!name) { toast('Player name required.'); return; }
   const faction = document.getElementById('ap-faction').value.trim();
-  const teamId = document.getElementById('ap-team').value;
+  const teamId = state.numTeams === 0 ? null : (document.getElementById('ap-team').value || null);
   state.players.push({ id: 'p' + Date.now(), name, faction, teamId });
   save();
   closeModal('modal-add-player');
