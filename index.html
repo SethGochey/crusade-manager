@@ -402,11 +402,11 @@
       </div>
       <nav>
         <button class="active" onclick="showView('overview')">Overview</button>
-        <button onclick="showView('alliances')">Alliances & Rosters</button>
+        <button onclick="showView('alliances')">Alliances</button>
         <button onclick="showView('matches')">Matches</button>
         <button onclick="showView('standings')">Standings</button>
         <button onclick="showView('pairings')">Pairings</button>
-        <button onclick="showView('print')">Print / Export</button>
+        <button onclick="showView('print')">Print</button>
         <button onclick="showView('settings')">Settings</button>
       </nav>
       <button id="hamburger" onclick="toggleMobileNav()" aria-label="Menu">
@@ -415,11 +415,11 @@
     </header>
     <div id="mobile-nav">
       <button class="active" onclick="showView('overview')">Overview</button>
-      <button onclick="showView('alliances')">Alliances &amp; Rosters</button>
+      <button onclick="showView('alliances')">Alliances</button>
       <button onclick="showView('matches')">Matches</button>
       <button onclick="showView('standings')">Standings</button>
       <button onclick="showView('pairings')">Pairings</button>
-      <button onclick="showView('print')">Print / Export</button>
+      <button onclick="showView('print')">Print</button>
       <button onclick="showView('settings')">Settings</button>
     </div>
 
@@ -447,7 +447,7 @@
       <!-- TEAMS -->
       <div id="view-alliances" class="view">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-          <h2 style="font-size:16px;color:var(--gold);">Alliances &amp; Rosters</h2>
+          <h2 style="font-size:16px;color:var(--gold);">Alliances</h2>
           <button class="btn btn-sm" onclick="openAddPlayerModal()">+ Add Player</button>
         </div>
         <div id="alliances-grid"></div>
@@ -749,7 +749,7 @@
     <h3>Edit Player</h3>
     <input type="hidden" id="ep-id">
     <div class="form-group"><label>Player Name</label><input id="ep-name" type="text"></div>
-    <div class="form-group"><label>Faction / Army</label><input id="ep-faction" type="text"></div>
+    <div class="form-group"><label>Faction - Army</label><input id="ep-faction" type="text"></div>
     <div class="form-group"><label>Alliance</label><select id="ep-alliance"></select></div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('modal-edit-player')">Cancel</button>
@@ -1526,7 +1526,7 @@ function renderPairings() {
   document.getElementById('pairings-method-info').textContent =
     state.pairing === 'winpath'
       ? `Win Path pairing: players are grouped by record, then win/loss sequence, then tiebroken by Opponent Game Win%. Players dropping from odd groups fall to the next bracket.`
-      : `Round Robin pairing: priority is given to opponents each player has not yet faced. Within that, players are seeded by Win Path (record → path sequence → OGW%) for closest-skill matchups.`;
+      : `Round Robin pairing: priority is given to opponents each player has not yet faced. Within that, players are seeded by Win Path (record → path sequence → OGW%).`;
 
   const container = document.getElementById('pairings-container');
   const byesEl = document.getElementById('pairings-byes');
@@ -1568,7 +1568,7 @@ function renderPairings() {
         <span style="margin-right:12px;">${p.name}
           <button class="btn btn-sm btn-ghost" style="margin-left:8px;font-size:11px;" onclick="openByeSPModal('${p.id}')">Record SP</button>
         </span>`).join('')}
-      <div style="font-size:12px;color:var(--text-muted);margin-top:6px;">Bye players earn no automatic SP, but you may optionally record SP for them.</div>
+      <div style="font-size:12px;color:var(--text-muted);margin-top:6px;">You may optionally record SP for Bye players.</div>
     </div>`;
   } else {
     byesEl.innerHTML = '';
@@ -1599,8 +1599,8 @@ function renderSettings() {
   document.getElementById('settings-spmethod-row').style.display = state.numAlliances === 0 ? 'none' : '';
   const hint = document.getElementById('settings-spmethod-hint');
   hint.textContent = (state.spMethod === 'per_match')
-    ? 'Phase winner = alliance with highest (total SP ÷ matches played). Levels the field when alliances have different player counts.'
-    : 'Phase winner = alliance with the highest raw SP total.';
+    ? 'Phase winner = alliance with highest average SP per Match. Levels the field when alliances differ in headcount.'
+    : 'Phase winner = alliance with the highest SP total.';
 }
 
 function updateSettings() {
@@ -1614,7 +1614,7 @@ function updateSettings() {
   state.spMethod = document.getElementById('settings-spmethod').value || 'raw';
   const hint = document.getElementById('settings-spmethod-hint');
   hint.textContent = (state.spMethod === 'per_match')
-    ? 'Phase winner = alliance with highest (total SP ÷ matches played). Levels the field when alliances have different player counts.'
+    ? 'Phase winner = alliance with highest average SP per Match. Levels the field when alliances differ in headcount.'
     : 'Phase winner = alliance with the highest raw SP total.';
   save();
   document.getElementById('header-title').textContent = state.name;
