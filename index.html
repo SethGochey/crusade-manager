@@ -384,6 +384,15 @@
           </select>
         </div>
 
+        <div class="form-group">
+          <label>Play Format</label>
+          <select id="setup-teammode">
+            <option value="0">Individual — players are paired directly against each other</option>
+            <option value="1">Team Play — players belong to teams; teams are paired each round</option>
+          </select>
+          <div class="txt-dim-sm" style="margin-top:4px;">In team play, captains assign individual match-ups from their rosters after teams are paired.</div>
+        </div>
+
         <div id="alliance-name-inputs" style="margin-top:8px;"></div>
 
         <div class="ornament" style="margin:20px 0 16px;">✦</div>
@@ -566,6 +575,14 @@
                   <option value="per_match">SP per Match Played</option>
                 </select>
                 <div style="font-size:11px;color:var(--text-dim);margin-top:4px;" id="settings-spmethod-hint"></div>
+              </div>
+              <div class="form-group" id="settings-teammode-row">
+                <label>Play Format</label>
+                <select id="settings-teammode" onchange="updateSettings()">
+                  <option value="0">Individual</option>
+                  <option value="1">Team Play</option>
+                </select>
+                <div class="txt-dim-sm" style="margin-top:4px;" id="settings-teammode-hint"></div>
               </div>
             </div>
           </div>
@@ -804,10 +821,14 @@ function defaultState() {
     allowRematches: false,
     roundsPerPhase: null,
     currentRound: 1,
+    teamMode: false,
     alliances: [],
+    teams: [],
     players: [],
     matches: [],
     pendingPairings: [],
+    teamPairings: [],
+    pendingTeamPairings: [],
   };
 }
 
@@ -846,7 +867,7 @@ function showApp() {
   el('main-app').style.flexDirection = 'column';
   el('header-title').textContent = state.name;
   el('header-sub').textContent =
-    `Round ${state.currentRound} · Phase ${getCurrentPhase()} · ${state.pairing === 'winpath' ? 'Win Path' : 'Round Robin'}`;
+    `Round ${state.currentRound} · Phase ${getCurrentPhase()} · ${state.pairing === 'winpath' ? 'Win Path' : 'Round Robin'}${state.teamMode ? ' · Team Play' : ''}`;
   renderAll();
 }
 
@@ -902,7 +923,7 @@ function renderAllianceNameInputs() {
     html += `<div class="form-group"><label>Alliance ${i+1}</label><input id="alliance-name-${i}" type="text" placeholder="${def}" value="${def}"></div>`;
   }
   html += '</div>';
-  el.innerHTML = html;
+  elNode.innerHTML = html;
 }
 
 function beginCrusade() {
@@ -927,6 +948,7 @@ function beginCrusade() {
     state.roundsPerPhase = calcDefaultRoundsPerPhase(setupPlayerCount || 8, numPhases, pairing);
   }
   state.spMethod = el('setup-spmethod').value || 'raw';
+  state.teamMode = el('setup-teammode').value === '1';
 
   for (let i = 0; i < numAlliances; i++) {
     const allianceName = (el(`alliance-name-${i}`)?.value.trim()) || `Alliance ${i+1}`;
@@ -1277,9 +1299,9 @@ function renderMatches() {
   rebuildSelect('filter-player', [['','All Players'], ...state.players.map(p=>[p.id,p.name])], curPlayer);
 
   let filtered = [...state.matches];
-  if (filterRound.value) filtered = filtered.filter(m => m.round == filterRound.value);
-  if (filterPhase.value) filtered = filtered.filter(m => m.phase == filterPhase.value);
-  if (filterPlayer.value) filtered = filtered.filter(m => m.p1 === filterPlayer.value || m.p2 === filterPlayer.value);
+  if (curRound) filtered = filtered.filter(m => m.round == curRound);
+  if (curPhase) filtered = filtered.filter(m => m.phase == curPhase);
+  if (curPlayer) filtered = filtered.filter(m => m.p1 === curPlayer || m.p2 === curPlayer);
   filtered.sort((a,b) => b.round - a.round || b.id - a.id);
 
   const tbody = el('matches-tbody');
@@ -1596,7 +1618,9 @@ function renderSettings() {
   el('settings-phases').value = state.numPhases || 3;
   el('settings-spmethod').value = state.spMethod || 'raw';
   el('settings-spmethod-row').style.display = state.numAlliances === 0 ? 'none' : '';
+  el('settings-teammode').value = state.teamMode ? '1' : '0';
   updateSpMethodHint();
+  updateTeamModeHint();
 }
 
 function updateSpMethodHint() {
@@ -1605,6 +1629,14 @@ function updateSpMethodHint() {
   hint.textContent = state.spMethod === 'per_match'
     ? 'Phase winner = alliance with highest (total SP ÷ matches played). Levels the field when alliances have different player counts.'
     : 'Phase winner = alliance with the highest raw SP total.';
+}
+
+function updateTeamModeHint() {
+  const hint = el('settings-teammode-hint');
+  if (!hint) return;
+  hint.textContent = state.teamMode
+    ? 'Teams are paired each round. Captains assign individual match-ups offline.'
+    : 'Players are paired directly against each other each round.';
 }
 
 function updateSettings() {
@@ -1616,7 +1648,16 @@ function updateSettings() {
   const phases = parseInt(el('settings-phases').value);
   if (phases >= 1) state.numPhases = phases;
   state.spMethod = el('settings-spmethod').value || 'raw';
+  const newTeamMode = el('settings-teammode').value === '1';
+  if (newTeamMode !== state.teamMode && state.matches.length > 0) {
+    if (!confirm('Changing the play format mid-crusade will affect pairing logic. Recorded matches will not be affected. Continue?')) {
+      el('settings-teammode').value = state.teamMode ? '1' : '0';
+      return;
+    }
+  }
+  state.teamMode = newTeamMode;
   updateSpMethodHint();
+  updateTeamModeHint();
   save();
   el('header-title').textContent = state.name;
   renderPhaseBar();
