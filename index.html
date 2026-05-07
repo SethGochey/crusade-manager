@@ -2267,7 +2267,7 @@ function openRecordMatchModal() {
 
   el('rm-p1').innerHTML = players.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
   el('rm-p2').innerHTML = players.map((p,i) => `<option value="${p.id}" ${i===1?'selected':''}>${p.name}</option>`).join('');
-  el('rm-round').value = state.teamMode ? state.currentRound - 1 : state.currentRound;
+  el('rm-round').value = state.currentRound;
   el('rm-p1-vp').value = 0;
   el('rm-p2-vp').value = 0;
   el('rm-p1-sp').value = 0;
@@ -2531,15 +2531,50 @@ function buildPhaseSummary() {
 function buildRosters() {
   let innerHtml = `<div class="print-section-title">Rosters</div>`;
 
-  if (state.numAlliances === 0) {
+  if (state.teamMode && state.teams.length > 0) {
+    // Team mode: group by alliance -> team -> players
+    const groups = state.alliances.length > 0 ? state.alliances : [null];
+    groups.forEach(alliance => {
+      const allianceTeams = alliance
+        ? state.teams.filter(t => t.allianceId === alliance.id)
+        : state.teams;
+      if (alliance) {
+        innerHtml += `<div style="font-weight:bold;font-size:11pt;margin-bottom:4pt;">${alliance.name}</div>`;
+      }
+      allianceTeams.forEach(team => {
+        const members = getTeamMembers(team.id);
+        const cap = state.players.find(p => p.id === team.captainPlayerId);
+        innerHtml += `<div style="margin-bottom:10pt;margin-left:${alliance?'12pt':'0'};">
+          <div style="font-weight:bold;font-size:10pt;margin-bottom:3pt;">${team.name}${cap ? ` — Captain: ${cap.name}` : ''}</div>
+          <table class="print-table"><thead><tr>
+            <th>Player</th><th>Faction</th><th>W</th><th>L</th><th>Win%</th><th>VP</th>
+          </tr></thead><tbody>`;
+        if (members.length === 0) {
+          innerHtml += `<tr><td colspan="6" style="color:#888;font-style:italic;">No players</td></tr>`;
+        } else {
+          members.forEach(p => {
+            const st = getPlayerStats(p.id);
+            innerHtml += `<tr>
+              <td>${p.id === team.captainPlayerId ? '⚑ ' : ''}${p.name}</td>
+              <td>${p.faction||'—'}</td>
+              <td>${st.wins}</td><td>${st.losses}</td>
+              <td>${(st.winPct*100).toFixed(0)}%</td>
+              <td>${st.vpFor}</td>
+            </tr>`;
+          });
+        }
+        innerHtml += `</tbody></table></div>`;
+      });
+    });
+  } else if (state.numAlliances === 0) {
     innerHtml += `<table class="print-table"><thead><tr>
       <th>Player</th><th>Faction</th><th>W</th><th>L</th><th>Win%</th>
     </tr></thead><tbody>`;
     state.players.forEach(p => {
-      const s = getPlayerStats(p.id);
+      const st = getPlayerStats(p.id);
       innerHtml += `<tr><td>${p.name}</td><td>${p.faction||'—'}</td>
-        <td>${s.wins}</td><td>${s.losses}</td>
-        <td>${(s.winPct*100).toFixed(0)}%</td></tr>`;
+        <td>${st.wins}</td><td>${st.losses}</td>
+        <td>${(st.winPct*100).toFixed(0)}%</td></tr>`;
     });
     innerHtml += `</tbody></table>`;
   } else {
@@ -2554,10 +2589,10 @@ function buildRosters() {
         innerHtml += `<tr><td colspan="5" style="color:#888;font-style:italic;">No players assigned</td></tr>`;
       } else {
         players.forEach(p => {
-          const s = getPlayerStats(p.id);
+          const st = getPlayerStats(p.id);
           innerHtml += `<tr><td>${p.name}</td><td>${p.faction||'—'}</td>
-            <td>${s.wins}</td><td>${s.losses}</td>
-            <td>${(s.winPct*100).toFixed(0)}%</td></tr>`;
+            <td>${st.wins}</td><td>${st.losses}</td>
+            <td>${(st.winPct*100).toFixed(0)}%</td></tr>`;
         });
       }
       innerHtml += `</tbody></table></div>`;
@@ -2598,56 +2633,138 @@ function buildIndividualStandings() {
 }
 
 function buildPairingsSection() {
+  return state.teamMode ? buildTeamPairingsSection() : buildIndividualPairingsSection();
+}
+
+function buildIndividualPairingsSection() {
   const pairs = state.pendingPairings || [];
   const byes = (state.pendingByes || []).map(id => state.players.find(p => p.id === id)).filter(Boolean);
   const round = state.currentRound;
+  const rec = p => p ? `${p.name} (${getPlayerStats(p.id).wins}W\u2013${getPlayerStats(p.id).losses}L)` : '?';
 
-  let html = `<div class="print-page">
-    <div class="print-header">
-      <h1>${state.name}</h1>
-      <div class="print-sub">Round ${round} Pairings &nbsp;·&nbsp; Phase ${getCurrentPhase()} of ${state.numPhases}</div>
-    </div>
+  let inner = `<div class="print-section-title">Round ${round} Pairings \u00b7 Phase ${getCurrentPhase()} of ${state.numPhases}</div>
     <table class="print-table">
       <thead><tr>
-        <th style="width:28pt;">#</th>
-        <th>Player</th>
-        <th style="width:30pt;text-align:center;">vs</th>
-        <th>Player</th>
-      </tr></thead>
-      <tbody>`;
+        <th style="width:28pt;">#</th><th>Player</th>
+        <th style="width:30pt;text-align:center;">vs</th><th>Player</th>
+      </tr></thead><tbody>`;
 
   if (pairs.length === 0) {
-    html += `<tr><td colspan="4" style="color:#888;font-style:italic;text-align:center;">No pairings generated yet.</td></tr>`;
+    inner += `<tr><td colspan="4" style="color:#888;font-style:italic;text-align:center;">No pairings generated yet.</td></tr>`;
   } else {
     pairs.forEach((pair, i) => {
       const p1 = state.players.find(p => p.id === pair.p1);
       const p2 = state.players.find(p => p.id === pair.p2);
-      const s1 = p1 ? getPlayerStats(p1.id) : null;
-      const s2 = p2 ? getPlayerStats(p2.id) : null;
-      const rec = p => p ? `${p.name} (${getPlayerStats(p.id).wins}W–${getPlayerStats(p.id).losses}L)` : '?';
-      html += `<tr class="print-pairing-row">
+      inner += `<tr class="print-pairing-row">
         <td class="print-pairing-num">${i+1}</td>
-        <td>${rec(p1)}</td>
-        <td class="print-vs">vs</td>
-        <td>${rec(p2)}</td>
+        <td>${rec(p1)}</td><td class="print-vs">vs</td><td>${rec(p2)}</td>
       </tr>`;
     });
   }
-
-  html += `</tbody></table>`;
-
+  inner += `</tbody></table>`;
   if (byes.length > 0) {
-    html += `<div class="print-bye-box">
-      <strong>Bye${byes.length > 1 ? 's' : ''}:</strong> ${byes.map(p => {
-        const s = getPlayerStats(p.id);
-        return `${p.name} (${s.wins}W–${s.losses}L)`;
-      }).join(', ')}
-    </div>`;
+    inner += `<div class="print-bye-box"><strong>Bye${byes.length > 1 ? 's' : ''}:</strong> ${byes.map(p => {
+      const s = getPlayerStats(p.id); return `${p.name} (${s.wins}W\u2013${s.losses}L)`;
+    }).join(', ')}</div>`;
   }
-
-  html += `</div>`;
-  return html;
+  return printPage(`Round ${round} Pairings`, inner);
 }
+
+function buildTeamPairingsSection() {
+  const pending = state.pendingTeamPairings || [];
+  const byes = (state.pendingByes || []).map(id => state.teams.find(t => t.id === id)).filter(Boolean);
+  const round = state.currentRound;
+  let inner = `<div class="print-section-title">Round ${round} Team Pairings \u00b7 Phase ${getCurrentPhase()} of ${state.numPhases}</div>`;
+
+  if (pending.length === 0) {
+    inner += `<p style="color:#888;font-style:italic;">No team pairings generated yet.</p>`;
+  } else {
+    pending.forEach((tp, i) => {
+      const team1 = state.teams.find(t => t.id === tp.team1Id);
+      const team2 = state.teams.find(t => t.id === tp.team2Id);
+      const a1 = team1 ? state.alliances.find(a => a.id === team1.allianceId) : null;
+      const a2 = team2 ? state.alliances.find(a => a.id === team2.allianceId) : null;
+      const members1 = team1 ? getTeamMembers(team1.id) : [];
+      const members2 = team2 ? getTeamMembers(team2.id) : [];
+      const cap1 = team1 ? state.players.find(p => p.id === team1.captainPlayerId) : null;
+      const cap2 = team2 ? state.players.find(p => p.id === team2.captainPlayerId) : null;
+      const tvp1 = team1 ? getTeamVP(team1.id) : 0;
+      const tvp2 = team2 ? getTeamVP(team2.id) : 0;
+      const twl1 = team1 ? getTeamWL(team1.id) : {wins:0,losses:0};
+      const twl2 = team2 ? getTeamWL(team2.id) : {wins:0,losses:0};
+
+      const memberRows = (members, capId) => members.length === 0
+        ? `<tr><td colspan="3" style="color:#888;font-style:italic;">No players</td></tr>`
+        : members.map(p => {
+            const st = getPlayerStats(p.id);
+            const ogw = (getOGW(p.id)*100).toFixed(1);
+            return `<tr>
+              <td>${p.id === capId ? '\u2691 ' : ''}${p.name}</td>
+              <td style="text-align:center;">${st.wins}W\u2013${st.losses}L</td>
+              <td style="text-align:right;">${ogw}% OGW</td>
+            </tr>`;
+          }).join('');
+
+      // Assignment rows: one per max(members1, members2) + 1 overflow
+      const assignRows = Math.max(members1.length, members2.length) + 1;
+
+      inner += `<div style="margin-bottom:16pt;page-break-inside:avoid;">
+        <div style="font-weight:bold;font-size:11pt;margin-bottom:4pt;">Pairing ${i+1}</div>
+        <table class="print-table" style="font-size:9pt;">
+          <thead><tr>
+            <th style="width:50%">${team1?.name||'?'}${a1 ? ` (${a1.name})` : ''}</th>
+            <th style="width:50%">${team2?.name||'?'}${a2 ? ` (${a2.name})` : ''}</th>
+          </tr></thead>
+          <tbody><tr style="background:#f0f0f0;font-size:8.5pt;">
+            <td>Captain: ${cap1?.name||'\u2014'} \u00b7 ${tvp1} VP \u00b7 ${twl1.wins}W\u2013${twl1.losses}L</td>
+            <td>Captain: ${cap2?.name||'\u2014'} \u00b7 ${tvp2} VP \u00b7 ${twl2.wins}W\u2013${twl2.losses}L</td>
+          </tr></tbody>
+        </table>
+        <table class="print-table" style="font-size:8.5pt;">
+          <thead><tr>
+            <th>Player</th><th style="text-align:center;">Record</th><th style="text-align:right;">OGW%</th>
+            <th>Player</th><th style="text-align:center;">Record</th><th style="text-align:right;">OGW%</th>
+          </tr></thead>
+          <tbody>
+            ${Array.from({length: Math.max(members1.length, members2.length)}, (_,idx) => {
+              const p1 = members1[idx], p2 = members2[idx];
+              const s1 = p1 ? getPlayerStats(p1.id) : null;
+              const s2 = p2 ? getPlayerStats(p2.id) : null;
+              return `<tr>
+                <td>${p1 ? (p1.id===team1?.captainPlayerId?'\u2691 ':'')+p1.name : ''}</td>
+                <td style="text-align:center;">${s1 ? `${s1.wins}W\u2013${s1.losses}L` : ''}</td>
+                <td style="text-align:right;">${s1 ? (getOGW(p1.id)*100).toFixed(1)+'%' : ''}</td>
+                <td>${p2 ? (p2.id===team2?.captainPlayerId?'\u2691 ':'')+p2.name : ''}</td>
+                <td style="text-align:center;">${s2 ? `${s2.wins}W\u2013${s2.losses}L` : ''}</td>
+                <td style="text-align:right;">${s2 ? (getOGW(p2.id)*100).toFixed(1)+'%' : ''}</td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+        <div style="margin-top:6pt;font-size:8pt;color:#888;font-style:italic;">Captains: write match assignments in the table below</div>
+        <table class="print-table" style="font-size:9pt;margin-top:4pt;">
+          <thead><tr>
+            <th style="width:24pt;">#</th>
+            <th>${team1?.name||'Team 1'} Player</th>
+            <th style="width:18pt;text-align:center;">vs</th>
+            <th>${team2?.name||'Team 2'} Player</th>
+          </tr></thead>
+          <tbody>${Array.from({length: assignRows}, (_,idx) =>
+            `<tr style="height:18pt;">
+              <td style="text-align:center;${idx===assignRows-1?'color:#bbb;':''}">${idx+1}</td>
+              <td></td><td style="text-align:center;">vs</td><td></td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>`;
+    });
+  }
+  if (byes.length > 0) {
+    inner += `<div class="print-bye-box"><strong>Bye team${byes.length>1?'s':''}:</strong> ${byes.map(t=>t.name).join(', ')}</div>`;
+  }
+  return printPage(`Round ${round} Team Pairings`, inner);
+}
+
 
 function buildMatchHistory() {
   const rounds = [...new Set(state.matches.filter(m=>!m.isBye).map(m=>m.round))].sort((a,b)=>a-b);
@@ -2849,9 +2966,14 @@ function runFullPrint() {
 }
 
 function quickPrintPairings() {
-  if (!state.pendingPairings || state.pendingPairings.length === 0) {
-    toast('Generate pairings first.');
-    return;
+  if (state.teamMode) {
+    if (!state.pendingTeamPairings || state.pendingTeamPairings.length === 0) {
+      toast('Generate team pairings first.'); return;
+    }
+  } else {
+    if (!state.pendingPairings || state.pendingPairings.length === 0) {
+      toast('Generate pairings first.'); return;
+    }
   }
   triggerPrint([buildPairingsSection()]);
 }
@@ -2883,7 +3005,11 @@ function renderPrintPreview() {
     el('pc-phases')?.checked    ? `<span>☩</span> Phase Summary (${state.numPhases} phase${state.numPhases!==1?'s':''})` : null,
     el('pc-rosters')?.checked   ? `<span>☩</span> Rosters (${state.alliances.length} alliance${state.alliances.length!==1?'s':''},  ${state.players.length} players)` : null,
     el('pc-standings')?.checked ? `<span>☩</span> Individual Standings (${state.players.length} players)` : null,
-    el('pc-pairings')?.checked  ? `<span>☩</span> Current Pairings — ${hasPairings ? `Round ${state.currentRound}, ${state.pendingPairings.length} matches` : 'none generated yet'}` : null,
+    el('pc-pairings')?.checked  ? `<span>☩</span> Current Pairings — ${
+      state.teamMode
+        ? ((state.pendingTeamPairings||[]).length > 0 ? `Round ${state.currentRound}, ${state.pendingTeamPairings.length} team matches` : 'none generated yet')
+        : (hasPairings ? `Round ${state.currentRound}, ${state.pendingPairings.length} matches` : 'none generated yet')
+    }` : null,
     el('pc-history')?.checked   ? `<span>☩</span> Match History (${state.matches.filter(m=>!m.isBye).length} matches, ${[...new Set(state.matches.filter(m=>!m.isBye).map(m=>m.round))].length} rounds)` : null,
     el('pc-scoresheet')?.checked ? `<span>☩</span> Round Scoresheet (${state.numPhases * getRoundsPerPhase()} rounds, ${Math.floor(state.players.length/2)+1} rows each)` : null,
   ].filter(Boolean).join('<br>');
