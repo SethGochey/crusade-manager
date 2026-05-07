@@ -1696,25 +1696,83 @@ function renderStandings() {
 
 // ─── Pairings ─────────────────────────────────────────────────────────────────
 function generatePairings() {
-  if (state.players.length < 2) {
-    toast('Need at least 2 players to generate pairings.');
-    return;
-  }
   const nextRound = state.currentRound;
-  let pairs, byes = [];
 
-  const allowIntraAlliance = state.numAlliances === 0 ||
-    el('pairing-allow-intraalliance')?.checked !== false;
-  if (state.pairing === 'winpath') {
-    ({ pairs, byes } = generateWinPathPairings(nextRound, allowIntraAlliance));
+  if (state.teamMode) {
+    if (state.teams.length < 2) { toast('Need at least 2 teams to generate pairings.'); return; }
+    const { pairs, byes } = generateTeamPairings(nextRound);
+    state.pendingTeamPairings = pairs.map(([a, b]) => ({ id: 'tp' + Date.now() + Math.random(), round: nextRound, team1Id: a.id, team2Id: b.id }));
+    state.pendingByes = byes.map(t => t.id);
   } else {
-    ({ pairs, byes } = generateRoundRobinPairings(nextRound, allowIntraAlliance));
+    if (state.players.length < 2) { toast('Need at least 2 players to generate pairings.'); return; }
+    const allowIntraAlliance = state.numAlliances === 0 ||
+      el('pairing-allow-intraalliance')?.checked !== false;
+    const { pairs, byes } = state.pairing === 'winpath'
+      ? generateWinPathPairings(nextRound, allowIntraAlliance)
+      : generateRoundRobinPairings(nextRound, allowIntraAlliance);
+    state.pendingPairings = pairs.map(([a, b]) => ({ p1: a.id, p2: b.id }));
+    state.pendingByes = byes.map(p => p.id);
   }
 
-  state.pendingPairings = pairs.map(([a, b]) => ({ p1: a.id, p2: b.id }));
-  state.pendingByes = byes.map(p => p.id);
   save();
   renderPairings();
+}
+
+function generateTeamPairings(round) {
+  const teams = [...state.teams];
+  const pairs = [];
+  const byes = [];
+
+  // Build set of already-paired team matchups
+  const played = new Set();
+  state.teamPairings.forEach(tp => played.add([tp.team1Id, tp.team2Id].sort().join('|')));
+  const hasPlayed = (a, b) => played.has([a.id, b.id].sort().join('|'));
+
+  // Sort teams by VP desc, then W/L ratio desc (higher VP = harder matchup)
+  const enriched = teams.map(t => ({
+    team: t,
+    vp: getTeamVP(t.id),
+    wl: getTeamWL(t.id),
+  }));
+
+  if (state.pairing === 'winpath') {
+    // Group by VP bracket, pair within brackets, tiebreak by W/L ratio
+    enriched.sort((a, b) => b.vp - a.vp || b.wl.winPct - a.wl.winPct);
+    const remaining = [...enriched];
+    let dropDown = null;
+    while (remaining.length >= 2) {
+      const a = dropDown || remaining.shift();
+      dropDown = null;
+      let bestIdx = 0;
+      // Prefer unplayed opponent
+      for (let i = 0; i < remaining.length; i++) {
+        if (!hasPlayed(a.team, remaining[i].team)) { bestIdx = i; break; }
+      }
+      const b = remaining.splice(bestIdx, 1)[0];
+      pairs.push([a.team, b.team]);
+    }
+    if (remaining.length === 1) byes.push(remaining[0].team);
+  } else {
+    // Round Robin: priority to unpaired opponents, then VP order
+    enriched.sort((a, b) => b.vp - a.vp || b.wl.winPct - a.wl.winPct);
+    const remaining = [...enriched];
+    while (remaining.length >= 2) {
+      const a = remaining.shift();
+      let bestIdx = -1;
+      // First pass: find first unplayed opponent
+      if (!state.allowRematches) {
+        for (let i = 0; i < remaining.length; i++) {
+          if (!hasPlayed(a.team, remaining[i].team)) { bestIdx = i; break; }
+        }
+      }
+      if (bestIdx === -1) bestIdx = 0;
+      const b = remaining.splice(bestIdx, 1)[0];
+      pairs.push([a.team, b.team]);
+    }
+    if (remaining.length === 1) byes.push(remaining[0].team);
+  }
+
+  return { pairs, byes };
 }
 
 function generateRoundRobinPairings(round, allowIntraAlliance = true) {
@@ -1846,17 +1904,97 @@ function generateWinPathPairings(round, allowIntraAlliance = true) {
 function renderPairings() {
   const nextRound = state.currentRound;
   el('next-round-num').textContent = nextRound;
-  // Show/hide intra-alliance checkbox (hidden in individual tournaments)
+
+  // Show/hide intra-alliance checkbox (hidden in individual tournaments and team mode)
   const intraRow = el('pairings-intra-alliance-row');
-  if (intraRow) intraRow.style.display = state.numAlliances === 0 ? 'none' : '';
-  el('pairings-method-info').textContent =
-    state.pairing === 'winpath'
+  if (intraRow) intraRow.style.display = (state.numAlliances === 0 || state.teamMode) ? 'none' : '';
+
+  el('pairings-method-info').textContent = state.teamMode
+    ? `Team pairing: teams are sorted by VP total. ${state.pairing === 'winpath' ? 'Teams are grouped by VP bracket and paired within brackets.' : 'Priority given to teams that have not yet faced each other.'} Higher VP earns the harder matchup.`
+    : state.pairing === 'winpath'
       ? `Win Path pairing: players are grouped by record, then win/loss sequence, then tiebroken by Opponent Game Win%. Players dropping from odd groups fall to the next bracket.`
       : `Round Robin pairing: priority is given to opponents each player has not yet faced. Within that, players are seeded by Win Path (record → path sequence → OGW%) for closest-skill matchups.`;
 
   const container = el('pairings-container');
   const byesEl = el('pairings-byes');
 
+  if (state.teamMode) {
+    renderTeamPairingCards(container, byesEl);
+  } else {
+    renderIndividualPairingCards(container, byesEl);
+  }
+}
+
+function renderTeamPairingCards(container, byesEl) {
+  const pending = state.pendingTeamPairings || [];
+  if (pending.length === 0) {
+    container.innerHTML = '<div class="empty-state">Click "Generate Next Round" to create team pairings.</div>';
+    byesEl.innerHTML = '';
+    return;
+  }
+
+  container.innerHTML = pending.map((tp, i) => {
+    const team1 = state.teams.find(t => t.id === tp.team1Id);
+    const team2 = state.teams.find(t => t.id === tp.team2Id);
+    const a1 = team1 ? state.alliances.find(a => a.id === team1.allianceId) : null;
+    const a2 = team2 ? state.alliances.find(a => a.id === team2.allianceId) : null;
+    const members1 = team1 ? getTeamMembers(team1.id) : [];
+    const members2 = team2 ? getTeamMembers(team2.id) : [];
+    const tvp1 = team1 ? getTeamVP(team1.id) : 0;
+    const tvp2 = team2 ? getTeamVP(team2.id) : 0;
+    const twl1 = team1 ? getTeamWL(team1.id) : { wins:0, losses:0 };
+    const twl2 = team2 ? getTeamWL(team2.id) : { wins:0, losses:0 };
+    const cap1 = team1 ? state.players.find(p => p.id === team1.captainPlayerId) : null;
+    const cap2 = team2 ? state.players.find(p => p.id === team2.captainPlayerId) : null;
+
+    const memberList = (members, capId) => members.length === 0
+      ? '<div style="color:var(--text-dim);font-style:italic;font-size:13px;">No players</div>'
+      : members.map(p => {
+          const s = getPlayerStats(p.id);
+          const ogw = (getOGW(p.id)*100).toFixed(1);
+          return `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);font-size:13px;">
+            <span>${p.id === capId ? '⚑ ' : ''}${p.name}</span>
+            <span class="txt-muted-sm">${s.wins}W–${s.losses}L · OGW ${ogw}%</span>
+          </div>`;
+        }).join('');
+
+    return `<div class="card" style="margin-bottom:12px;">
+      <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:16px;align-items:start;">
+        <div>
+          <div style="font-family:'Cinzel',serif;font-size:14px;color:var(--gold);margin-bottom:4px;">
+            ${a1 ? `<span class="alliance-badge" style="background:${a1.color}"></span>` : ''}${team1?.name||'?'}
+          </div>
+          <div class="txt-muted-sm" style="margin-bottom:2px;">${cap1 ? `Captain: ${cap1.name}` : 'No captain'}</div>
+          <div class="txt-muted-sm" style="margin-bottom:8px;">${tvp1} VP · ${twl1.wins}W–${twl1.losses}L</div>
+          ${memberList(members1, team1?.captainPlayerId)}
+        </div>
+        <div style="font-family:'Cinzel',serif;font-size:20px;color:var(--gold);padding-top:4px;">vs</div>
+        <div style="text-align:right;">
+          <div style="font-family:'Cinzel',serif;font-size:14px;color:var(--gold);margin-bottom:4px;">
+            ${team2?.name||'?'}${a2 ? `<span class="alliance-badge" style="background:${a2.color};margin-left:6px;margin-right:0;"></span>` : ''}
+          </div>
+          <div class="txt-muted-sm" style="margin-bottom:2px;">${cap2 ? `Captain: ${cap2.name}` : 'No captain'}</div>
+          <div class="txt-muted-sm" style="margin-bottom:8px;">${tvp2} VP · ${twl2.wins}W–${twl2.losses}L</div>
+          <div style="text-align:left;">${memberList(members2, team2?.captainPlayerId)}</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Bye teams
+  if (state.pendingByes && state.pendingByes.length > 0) {
+    const byeTeams = state.pendingByes.map(id => state.teams.find(t => t.id === id)).filter(Boolean);
+    if (byeTeams.length > 0) {
+      byesEl.innerHTML = `<div class="alert alert-warn" style="margin-top:12px;">
+        <strong>Bye team${byeTeams.length > 1 ? 's' : ''}:</strong> ${byeTeams.map(t => t.name).join(', ')} — no opponent this round.
+      </div>`;
+      return;
+    }
+  }
+  byesEl.innerHTML = '';
+}
+
+function renderIndividualPairingCards(container, byesEl) {
   if (!state.pendingPairings || state.pendingPairings.length === 0) {
     container.innerHTML = '<div class="empty-state">Click "Generate Next Round" to create pairings.</div>';
     byesEl.innerHTML = '';
@@ -1894,7 +2032,7 @@ function renderPairings() {
         <span style="margin-right:12px;">${p.name}
           <button class="btn btn-sm btn-ghost" style="margin-left:8px;font-size:11px;" onclick="openByeSPModal('${p.id}')">Record SP</button>
         </span>`).join('')}
-      <div style="font-size:12px;color:var(--text-muted);margin-top:6px;">Bye players earn no automatic SP, but you may optionally record SP for them.</div>
+      <div class="txt-muted-sm" style="margin-top:6px;">Bye players earn no automatic SP, but you may optionally record SP for them.</div>
     </div>`;
   } else {
     byesEl.innerHTML = '';
@@ -1902,13 +2040,21 @@ function renderPairings() {
 }
 
 function lockPairings() {
-  if (!state.pendingPairings || state.pendingPairings.length === 0) {
+  const hasIndividual = state.pendingPairings && state.pendingPairings.length > 0;
+  const hasTeam = state.pendingTeamPairings && state.pendingTeamPairings.length > 0;
+  if (!hasIndividual && !hasTeam) {
     toast('Generate pairings first.');
     return;
   }
-  state.currentRound++;
-  state.pendingPairings = [];
+  if (hasTeam) {
+    state.teamPairings = [...(state.teamPairings || []), ...state.pendingTeamPairings];
+    state.pendingTeamPairings = [];
+  }
+  if (hasIndividual) {
+    state.pendingPairings = [];
+  }
   state.pendingByes = [];
+  state.currentRound++;
   save();
   renderAll();
   toast(`Round ${state.currentRound - 1} locked. Now on Round ${state.currentRound}.`);
