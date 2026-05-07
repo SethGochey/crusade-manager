@@ -1,3 +1,5 @@
+> The following readme was AI generated.
+
 # Crusade Manager
 
 A fully offline, browser-based campaign tracker for **Warhammer 40,000 Crusade** events. No server, no account, no installation required — download a single HTML file, open it in any browser, and everything persists in local storage.
