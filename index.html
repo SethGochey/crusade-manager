@@ -460,8 +460,11 @@
       <!-- TEAMS -->
       <div id="view-alliances" class="view">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-          <h2 style="font-size:16px;color:var(--gold);">Alliances &amp; Rosters</h2>
-          <button class="btn btn-sm" onclick="openAddPlayerModal()">+ Add Player</button>
+          <h2 style="font-size:16px;color:var(--gold);" id="alliances-view-title">Alliances &amp; Rosters</h2>
+          <div style="display:flex;gap:8px;" id="alliances-view-buttons">
+            <button class="btn btn-sm" id="btn-add-team" style="display:none;" onclick="openAddTeamModal()">+ Add Team</button>
+            <button class="btn btn-sm" onclick="openAddPlayerModal()">+ Add Player</button>
+          </div>
         </div>
         <div id="alliances-grid"></div>
       </div>
@@ -682,7 +685,11 @@
     </div>
     <div class="form-group" id="ap-alliance-row">
       <label>Assign to Alliance</label>
-      <select id="ap-alliance"></select>
+      <select id="ap-alliance" onchange="updateApTeamSelect()"></select>
+    </div>
+    <div class="form-group" id="ap-team-row" style="display:none;">
+      <label>Assign to Team</label>
+      <select id="ap-team"></select>
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('modal-add-player')">Cancel</button>
@@ -771,10 +778,37 @@
     <input type="hidden" id="ep-id">
     <div class="form-group"><label>Player Name</label><input id="ep-name" type="text"></div>
     <div class="form-group"><label>Faction / Army</label><input id="ep-faction" type="text"></div>
-    <div class="form-group"><label>Alliance</label><select id="ep-alliance"></select></div>
+    <div class="form-group" id="ep-alliance-row"><label>Alliance</label><select id="ep-alliance"></select></div>
+    <div class="form-group" id="ep-team-row"><label>Team</label><select id="ep-team"></select></div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('modal-edit-player')">Cancel</button>
       <button class="btn btn-primary" onclick="saveEditPlayer()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-add-team">
+  <div class="modal">
+    <h3>Add Team</h3>
+    <div class="form-group"><label>Team Name</label><input id="at-name" type="text" placeholder="e.g. Iron Wolves"></div>
+    <div class="form-group" id="at-alliance-row"><label>Alliance</label><select id="at-alliance"></select></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-add-team')">Cancel</button>
+      <button class="btn btn-primary" onclick="addTeam()">Add Team</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-edit-team">
+  <div class="modal">
+    <h3>Edit Team</h3>
+    <input type="hidden" id="et-id">
+    <div class="form-group"><label>Team Name</label><input id="et-name" type="text"></div>
+    <div class="form-group" id="et-alliance-row"><label>Alliance</label><select id="et-alliance"></select></div>
+    <div class="form-group"><label>Captain</label><select id="et-captain"></select></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-edit-team')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEditTeam()">Save</button>
     </div>
   </div>
 </div>
@@ -1220,11 +1254,144 @@ function renderRecentMatches() {
   }).join('');
 }
 
+// ─── Team Helpers ─────────────────────────────────────────────────────────────
+function getTeamMembers(teamId) {
+  return state.players.filter(p => p.teamId === teamId);
+}
+
+function getTeamVP(teamId) {
+  const members = getTeamMembers(teamId);
+  const ids = new Set(members.map(p => p.id));
+  return state.matches.filter(m => !m.isBye).reduce((sum, m) => {
+    if (ids.has(m.p1)) sum += m.p1vp;
+    if (ids.has(m.p2)) sum += m.p2vp;
+    return sum;
+  }, 0);
+}
+
+function getTeamWL(teamId) {
+  const members = getTeamMembers(teamId);
+  const ids = new Set(members.map(p => p.id));
+  let wins = 0, losses = 0, draws = 0;
+  state.matches.filter(m => !m.isBye).forEach(m => {
+    if (ids.has(m.p1)) {
+      if (m.p1result === 'win') wins++;
+      else if (m.p1result === 'loss') losses++;
+      else draws++;
+    }
+    if (ids.has(m.p2)) {
+      if (m.p2result === 'win') wins++;
+      else if (m.p2result === 'loss') losses++;
+      else draws++;
+    }
+  });
+  const gp = wins + losses + draws;
+  return { wins, losses, draws, gp, winPct: gp > 0 ? wins / gp : 0 };
+}
+
+// ─── Team Modal Functions ──────────────────────────────────────────────────────
+function openAddTeamModal(presetAllianceId) {
+  el('at-name').value = '';
+  const allianceRow = el('at-alliance-row');
+  const sel = el('at-alliance');
+  if (state.numAlliances === 0 || state.alliances.length === 0) {
+    allianceRow.style.display = 'none';
+  } else {
+    allianceRow.style.display = '';
+    sel.innerHTML = state.alliances.map(a =>
+      `<option value="${a.id}" ${a.id === presetAllianceId ? 'selected' : ''}>${a.name}</option>`
+    ).join('');
+  }
+  openModal('modal-add-team');
+}
+
+function addTeam() {
+  const name = el('at-name').value.trim();
+  if (!name) { toast('Team name required.'); return; }
+  const allianceId = (state.numAlliances > 0 && state.alliances.length > 0)
+    ? el('at-alliance').value : null;
+  state.teams.push({ id: 'tm' + Date.now(), name, allianceId, captainPlayerId: null });
+  save();
+  closeModal('modal-add-team');
+  renderAlliances();
+  toast(`${name} formed.`);
+}
+
+function openEditTeam(teamId) {
+  const team = state.teams.find(t => t.id === teamId);
+  if (!team) return;
+  el('et-id').value = team.id;
+  el('et-name').value = team.name;
+  const allianceRow = el('et-alliance-row');
+  const allianceSel = el('et-alliance');
+  if (state.numAlliances === 0 || state.alliances.length === 0) {
+    allianceRow.style.display = 'none';
+  } else {
+    allianceRow.style.display = '';
+    allianceSel.innerHTML = state.alliances.map(a =>
+      `<option value="${a.id}" ${a.id === team.allianceId ? 'selected' : ''}>${a.name}</option>`
+    ).join('');
+  }
+  const members = getTeamMembers(teamId);
+  const captainSel = el('et-captain');
+  captainSel.innerHTML = `<option value="">— No captain designated —</option>` +
+    members.map(p => `<option value="${p.id}" ${p.id === team.captainPlayerId ? 'selected' : ''}>${p.name}</option>`).join('');
+  openModal('modal-edit-team');
+}
+
+function saveEditTeam() {
+  const id = el('et-id').value;
+  const team = state.teams.find(t => t.id === id);
+  if (!team) return;
+  team.name = el('et-name').value.trim() || team.name;
+  if (state.alliances.length > 0) team.allianceId = el('et-alliance').value;
+  team.captainPlayerId = el('et-captain').value || null;
+  save();
+  closeModal('modal-edit-team');
+  renderAlliances();
+  toast('Team updated.');
+}
+
+function removeTeam(teamId) {
+  const team = state.teams.find(t => t.id === teamId);
+  if (!team) return;
+  const members = getTeamMembers(teamId);
+  if (!confirm(`Remove team "${team.name}"? ${members.length > 0 ? `${members.length} player(s) will be unassigned from this team.` : ''}`)) return;
+  members.forEach(p => { p.teamId = null; });
+  state.teams = state.teams.filter(t => t.id !== teamId);
+  save();
+  renderAlliances();
+  toast(`${team.name} disbanded.`);
+}
+
 // ─── Alliances ────────────────────────────────────────────────────────────────────
 function renderAlliances() {
   const grid = el('alliances-grid');
+  const addTeamBtn = el('btn-add-team');
+  const viewTitle = el('alliances-view-title');
+
+  // Show/hide Add Team button
+  if (addTeamBtn) addTeamBtn.style.display = state.teamMode ? '' : 'none';
+  if (viewTitle) viewTitle.textContent = state.teamMode ? 'Alliances, Teams & Rosters' : 'Alliances & Rosters';
+
   if (state.numAlliances === 0 || state.alliances.length === 0) {
-    // Individual tournament — show all players in a single roster card
+    if (state.teamMode) {
+      renderAlliancesTeamModeNoAlliances(grid);
+    } else {
+      renderAlliancesIndividual(grid);
+    }
+    return;
+  }
+
+  if (state.teamMode) {
+    renderAlliancesTeamMode(grid);
+  } else {
+    renderAlliancesIndividual(grid);
+  }
+}
+
+function renderAlliancesIndividual(grid) {
+  if (state.numAlliances === 0 || state.alliances.length === 0) {
     const players = state.players;
     grid.innerHTML = `<div class="card">
       <div class="card-header"><span class="card-title">Individual Roster</span><span class="txt-muted-sm">${players.length} player${players.length!==1?'s':''}</span></div>
@@ -1257,14 +1424,14 @@ function renderAlliances() {
           </div>
           <span class="stat-pill pill-gold">${allianceSP} SP</span>
         </div>
-        <div style="font-size:11px;color:var(--text-muted);font-family:'Cinzel',serif;letter-spacing:0.05em;margin-bottom:8px;">ROSTER — ${players.length} player${players.length!==1?'s':''}</div>
+        <div class="txt-dim-sm" style="margin-bottom:8px;font-family:'Cinzel',serif;letter-spacing:0.05em;">ROSTER — ${players.length} player${players.length!==1?'s':''}</div>
         ${players.length === 0 ? '<div style="color:var(--text-dim);font-style:italic;font-size:13px;">No players assigned</div>' :
           players.map(p => {
             const stats = getPlayerStats(p.id);
             return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">
               <div>
                 <div style="font-size:14px;">${p.name}</div>
-                <div style="font-size:12px;color:var(--text-muted);font-style:italic;">${p.faction||''}</div>
+                <div class="txt-muted-sm" style="font-style:italic;">${p.faction||''}</div>
               </div>
               <div style="display:flex;align-items:center;gap:6px;">
                 <span style="font-size:12px;color:#6ABF6A;">${stats.wins}W</span>
@@ -1277,6 +1444,82 @@ function renderAlliances() {
         }
       </div>`;
     }).join('') + '</div>';
+}
+
+function renderAlliancesTeamModeNoAlliances(grid) {
+  // Team mode, no alliances — show teams directly
+  const teams = state.teams;
+  if (teams.length === 0) {
+    grid.innerHTML = `<div class="empty-state">No teams yet. Click "+ Add Team" to create your first team.</div>`;
+    return;
+  }
+  grid.innerHTML = `<div class="grid-${Math.min(teams.length, 3)}">` +
+    teams.map(team => teamCard(team)).join('') + '</div>';
+}
+
+function renderAlliancesTeamMode(grid) {
+  // Team mode with alliances — alliance cards containing team cards
+  grid.innerHTML = state.alliances.map(alliance => {
+    const allianceTeams = state.teams.filter(t => t.allianceId === alliance.id);
+    const currentPhase = getCurrentPhase();
+    const { sp: allianceSP } = getAllianceSP(alliance.id, currentPhase);
+    return `<div class="card" style="margin-bottom:16px;">
+      <div class="card-header">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span class="alliance-badge" style="background:${alliance.color};width:14px;height:14px;"></span>
+          <span class="card-title">${alliance.name}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span class="stat-pill pill-gold">${allianceSP} SP</span>
+          <button class="btn btn-sm btn-ghost" onclick="openAddTeamModal('${alliance.id}')">+ Team</button>
+        </div>
+      </div>
+      ${allianceTeams.length === 0
+        ? '<div class="empty-state" style="padding:16px;">No teams in this alliance yet.</div>'
+        : `<div class="grid-${Math.min(allianceTeams.length, 2)}" style="gap:12px;">
+            ${allianceTeams.map(team => teamCard(team)).join('')}
+           </div>`}
+    </div>`;
+  }).join('');
+}
+
+function teamCard(team) {
+  const members = state.players.filter(p => p.teamId === team.id);
+  const captain = members.find(p => p.id === team.captainPlayerId);
+  const tvp = getTeamVP(team.id);
+  const twl = getTeamWL(team.id);
+  return `<div class="card" style="background:var(--surface3);">
+    <div class="card-header" style="padding-bottom:8px;margin-bottom:8px;">
+      <span class="card-title" style="font-size:13px;">${team.name}</span>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <span class="stat-pill pill-gold" style="font-size:11px;">${tvp} VP</span>
+        <button class="btn btn-sm btn-ghost" onclick="openEditTeam('${team.id}')">✎</button>
+        <button class="btn btn-sm btn-danger" onclick="removeTeam('${team.id}')">✕</button>
+      </div>
+    </div>
+    ${captain ? `<div class="txt-muted-sm" style="margin-bottom:6px;">⚑ Captain: ${captain.name}</div>` : ''}
+    <div class="txt-dim-sm" style="font-family:'Cinzel',serif;letter-spacing:0.05em;margin-bottom:6px;">
+      ${twl.wins}W–${twl.losses}L &nbsp;·&nbsp; ${members.length} player${members.length!==1?'s':''}
+    </div>
+    ${members.length === 0
+      ? '<div style="color:var(--text-dim);font-style:italic;font-size:13px;">No players assigned</div>'
+      : members.map(p => {
+          const stats = getPlayerStats(p.id);
+          const isCaptain = p.id === team.captainPlayerId;
+          return `<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);">
+            <div>
+              <span style="font-size:14px;">${isCaptain ? '⚑ ' : ''}${p.name}</span>
+              ${p.faction ? `<span class="txt-muted-sm" style="margin-left:6px;font-style:italic;">${p.faction}</span>` : ''}
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span style="font-size:12px;color:#6ABF6A;">${stats.wins}W</span>
+              <span style="font-size:12px;color:#E06060;">${stats.losses}L</span>
+              <button class="btn btn-sm btn-ghost" onclick="openEditPlayer('${p.id}')">✎</button>
+              <button class="btn btn-sm btn-danger" onclick="removePlayer('${p.id}')">✕</button>
+            </div>
+          </div>`;
+        }).join('')}
+  </div>`;
 }
 
 // ─── Matches ──────────────────────────────────────────────────────────────────
@@ -1669,16 +1912,30 @@ function updateSettings() {
 function openAddPlayerModal() {
   const sel = el('ap-alliance');
   const allianceRow = el('ap-alliance-row');
+  const teamRow = el('ap-team-row');
   if (state.numAlliances === 0) {
     allianceRow.style.display = 'none';
-    sel.innerHTML = '';
   } else {
     allianceRow.style.display = '';
-    sel.innerHTML = state.alliances.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+    sel.innerHTML = state.alliances.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
+  }
+  // Show team select only in team mode
+  if (state.teamMode) {
+    teamRow.style.display = '';
+    updateApTeamSelect();
+  } else {
+    teamRow.style.display = 'none';
   }
   el('ap-name').value = '';
   el('ap-faction').value = '';
   openModal('modal-add-player');
+}
+
+function updateApTeamSelect() {
+  const allianceId = state.numAlliances > 0 ? el('ap-alliance').value : null;
+  const teams = state.teams.filter(t => allianceId ? t.allianceId === allianceId : true);
+  el('ap-team').innerHTML = `<option value="">— No team —</option>` +
+    teams.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
 }
 
 function addPlayer() {
@@ -1686,7 +1943,17 @@ function addPlayer() {
   if (!name) { toast('Player name required.'); return; }
   const faction = el('ap-faction').value.trim();
   const allianceId = state.numAlliances === 0 ? null : (el('ap-alliance').value || null);
-  state.players.push({ id: 'p' + Date.now(), name, faction, allianceId });
+  const teamId = (state.teamMode && el('ap-team').value) ? el('ap-team').value : null;
+
+  // Validate alliance/team consistency
+  if (teamId) {
+    const team = state.teams.find(t => t.id === teamId);
+    if (team && allianceId && team.allianceId !== allianceId) {
+      toast('Player alliance must match their team\'s alliance.'); return;
+    }
+  }
+
+  state.players.push({ id: 'p' + Date.now(), name, faction, allianceId, teamId });
   save();
   closeModal('modal-add-player');
   renderAll();
@@ -1700,8 +1967,27 @@ function openEditPlayer(playerId) {
   el('ep-id').value = p.id;
   el('ep-name').value = p.name;
   el('ep-faction').value = p.faction || '';
-  const sel = el('ep-alliance');
-  sel.innerHTML = state.alliances.map(t => `<option value="${t.id}" ${t.id===p.allianceId?'selected':''}>${t.name}</option>`).join('');
+  const allianceRow = el('ep-alliance-row');
+  const allianceSel = el('ep-alliance');
+  const teamRow = el('ep-team-row');
+  const teamSel = el('ep-team');
+  if (state.numAlliances === 0) {
+    allianceRow.style.display = 'none';
+  } else {
+    allianceRow.style.display = '';
+    allianceSel.innerHTML = state.alliances.map(a =>
+      `<option value="${a.id}" ${a.id === p.allianceId ? 'selected' : ''}>${a.name}</option>`
+    ).join('');
+  }
+  if (state.teamMode) {
+    teamRow.style.display = '';
+    const allianceId = p.allianceId;
+    const teams = state.teams.filter(t => allianceId ? t.allianceId === allianceId : true);
+    teamSel.innerHTML = `<option value="">— No team —</option>` +
+      teams.map(t => `<option value="${t.id}" ${t.id === p.teamId ? 'selected' : ''}>${t.name}</option>`).join('');
+  } else {
+    teamRow.style.display = 'none';
+  }
   openModal('modal-edit-player');
 }
 
@@ -1711,7 +1997,17 @@ function saveEditPlayer() {
   if (!p) return;
   p.name = el('ep-name').value.trim() || p.name;
   p.faction = el('ep-faction').value.trim();
-  p.allianceId = el('ep-alliance').value;
+  if (state.numAlliances > 0) p.allianceId = el('ep-alliance').value;
+  if (state.teamMode) {
+    const newTeamId = el('ep-team').value || null;
+    if (newTeamId) {
+      const team = state.teams.find(t => t.id === newTeamId);
+      if (team && p.allianceId && team.allianceId !== p.allianceId) {
+        toast('Player alliance must match their team\'s alliance.'); return;
+      }
+    }
+    p.teamId = newTeamId;
+  }
   save();
   closeModal('modal-edit-player');
   renderAll();
