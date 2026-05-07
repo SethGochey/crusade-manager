@@ -704,6 +704,10 @@
 <div class="modal-overlay" id="modal-record-match">
   <div class="modal">
     <h3>Record Match Result</h3>
+    <div class="form-group" id="rm-team-pairing-row" style="display:none;">
+      <label>Team Pairing</label>
+      <select id="rm-team-pairing" onchange="updateRmPlayersFromPairing()"></select>
+    </div>
     <div class="form-row">
       <div class="form-group">
         <label>Round</label>
@@ -2236,9 +2240,34 @@ function removePlayer(playerId) {
 function openRecordMatchModal() {
   const players = state.players;
   if (players.length < 2) { toast('Need at least 2 players.'); return; }
+
+  // Team pairing row — show in team mode with locked pairings for current round
+  const tpRow = el('rm-team-pairing-row');
+  const tpSel = el('rm-team-pairing');
+  if (state.teamMode) {
+    // Combine locked + pending team pairings for the current round
+    const roundPairings = [
+      ...(state.teamPairings || []).filter(tp => tp.round === state.currentRound - 1),
+      ...(state.pendingTeamPairings || []).map(tp => ({ ...tp, round: state.currentRound })),
+    ];
+    if (roundPairings.length > 0) {
+      tpRow.style.display = '';
+      tpSel.innerHTML = `<option value="">— Any / unspecified —</option>` +
+        roundPairings.map(tp => {
+          const t1 = state.teams.find(t => t.id === tp.team1Id);
+          const t2 = state.teams.find(t => t.id === tp.team2Id);
+          return `<option value="${tp.id}">${t1?.name||'?'} vs ${t2?.name||'?'}</option>`;
+        }).join('');
+    } else {
+      tpRow.style.display = 'none';
+    }
+  } else {
+    tpRow.style.display = 'none';
+  }
+
   el('rm-p1').innerHTML = players.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
   el('rm-p2').innerHTML = players.map((p,i) => `<option value="${p.id}" ${i===1?'selected':''}>${p.name}</option>`).join('');
-  el('rm-round').value = state.currentRound;
+  el('rm-round').value = state.teamMode ? state.currentRound - 1 : state.currentRound;
   el('rm-p1-vp').value = 0;
   el('rm-p2-vp').value = 0;
   el('rm-p1-sp').value = 0;
@@ -2248,6 +2277,23 @@ function openRecordMatchModal() {
   updateMatchPhaseDisplay();
   el('rm-round').addEventListener('input', updateMatchPhaseDisplay);
   openModal('modal-record-match');
+}
+
+function updateRmPlayersFromPairing() {
+  const tpId = el('rm-team-pairing').value;
+  if (!tpId) return;
+  // Find the pairing in locked or pending
+  const tp = [...(state.teamPairings||[]), ...(state.pendingTeamPairings||[])].find(t => t.id === tpId);
+  if (!tp) return;
+  // Filter player selects to members of the two teams
+  const team1members = getTeamMembers(tp.team1Id);
+  const team2members = getTeamMembers(tp.team2Id);
+  const t1 = state.teams.find(t => t.id === tp.team1Id);
+  const t2 = state.teams.find(t => t.id === tp.team2Id);
+  el('rm-p1').innerHTML = team1members.map(p => `<option value="${p.id}">${p.name}</option>`).join('') ||
+    `<option value="">No players in ${t1?.name||'Team 1'}</option>`;
+  el('rm-p2').innerHTML = team2members.map(p => `<option value="${p.id}">${p.name}</option>`).join('') ||
+    `<option value="">No players in ${t2?.name||'Team 2'}</option>`;
 }
 
 function updateMatchPhaseDisplay() {
@@ -2261,6 +2307,7 @@ function recordMatch() {
   if (p1id === p2id) { toast('Players must be different.'); return; }
   const round = parseInt(el('rm-round').value) || state.currentRound;
   const phase = getPhaseForRound(round);
+  const teamPairingId = state.teamMode ? (el('rm-team-pairing').value || null) : null;
   const match = {
     id: Date.now(),
     round, phase,
@@ -2271,6 +2318,7 @@ function recordMatch() {
     p2vp: parseInt(el('rm-p2-vp').value) || 0,
     p1sp: parseInt(el('rm-p1-sp').value) || 0,
     p2sp: parseInt(el('rm-p2-sp').value) || 0,
+    teamPairingId,
   };
   state.matches.push(match);
   save();
