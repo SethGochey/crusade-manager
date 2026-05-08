@@ -321,7 +321,7 @@
       <div class="ornament">✦ ✦ ✦</div>
 
       <div class="card">
-        <div class="card-header"><span class="card-title">Begin New Crusade</span></div>
+        <div class="card-header"><span class="card-title">Begin A New Crusade</span></div>
 
         <div class="form-group">
           <label>Crusade Name</label>
@@ -331,13 +331,13 @@
         <div class="form-row">
           <div class="form-group">
             <label>Number of Alliances</label>
-            <input id="setup-alliances" type="number" min="0" max="20" value="3" oninput="renderAllianceNameInputs()">
+            <input id="setup-alliances" type="number" min="0" max="99" value="3" oninput="renderAllianceNameInputs()">
             <div style="font-size:11px;color:var(--text-dim);margin-top:4px;">Set to 0 for an individual (no-alliance) tournament</div>
           </div>
           <div class="form-group">
             <label>Pairing Method</label>
             <select id="setup-pairing" onchange="updateSetupDefaults()">
-              <option value="roundrobin">Round Robin (default)</option>
+              <option value="roundrobin">Round Robin</option>
               <option value="winpath">Win Path</option>
             </select>
           </div>
@@ -365,15 +365,15 @@
             <div style="font-size:11px;color:var(--text-dim);margin-top:4px;">Leave blank to use default</div>
           </div>
           <div class="form-group">
-            <label>Allow Rematches?</label>
+            <label>Delay Rematches?</label>
             <select id="setup-rematch">
-              <option value="0">No — avoid rematches</option>
-              <option value="1">Yes — allow rematches</option>
+              <option value="0">Yes</option>
+              <option value="1">No</option>
             </select>
           </div>
           <div class="form-group">
             <label>Number of Phases</label>
-            <input id="setup-phases" type="number" min="1" max="20" value="3" oninput="updateSetupDefaults()">
+            <input id="setup-phases" type="number" min="1" max="99" value="4" oninput="updateSetupDefaults()">
           </div>
         </div>
         <div class="form-group">
@@ -415,11 +415,11 @@
       </div>
       <nav>
         <button class="active" onclick="showView('overview')">Overview</button>
-        <button onclick="showView('alliances')">Alliances & Rosters</button>
+        <button onclick="showView('alliances')">Alliances &amp; Rosters</button>
         <button onclick="showView('matches')">Matches</button>
         <button onclick="showView('standings')">Standings</button>
         <button onclick="showView('pairings')">Pairings</button>
-        <button onclick="showView('print')">Print / Export</button>
+        <button onclick="showView('print')">Print</button>
         <button onclick="showView('settings')">Settings</button>
       </nav>
       <button id="hamburger" onclick="toggleMobileNav()" aria-label="Menu">
@@ -432,7 +432,7 @@
       <button onclick="showView('matches')">Matches</button>
       <button onclick="showView('standings')">Standings</button>
       <button onclick="showView('pairings')">Pairings</button>
-      <button onclick="showView('print')">Print / Export</button>
+      <button onclick="showView('print')">Print</button>
       <button onclick="showView('settings')">Settings</button>
     </div>
 
@@ -791,7 +791,7 @@
     <h3>Edit Player</h3>
     <input type="hidden" id="ep-id">
     <div class="form-group"><label>Player Name</label><input id="ep-name" type="text"></div>
-    <div class="form-group"><label>Faction / Army</label><input id="ep-faction" type="text"></div>
+    <div class="form-group"><label>Faction - Army</label><input id="ep-faction" type="text"></div>
     <div class="form-group" id="ep-alliance-row"><label>Alliance</label><select id="ep-alliance"></select></div>
     <div class="form-group" id="ep-team-row"><label>Team</label><select id="ep-team"></select></div>
     <div class="modal-footer">
