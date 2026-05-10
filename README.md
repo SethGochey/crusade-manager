@@ -260,3 +260,13 @@ In team play mode the scoresheet shows team pairings with the write-in assignmen
 The app uses standard HTML, CSS, and JavaScript with no external dependencies loaded at runtime (fonts are loaded from Google Fonts on first open). It works in any modern browser — Chrome, Firefox, Safari, Edge. Internet Explorer is not supported.
 
 Local storage is used for persistence. Private/incognito browsing sessions will not retain data between browser restarts. For permanent storage, export your data regularly.
+
+---
+
+## Contributing
+
+Issues and pull requests welcome. The entire app lives in a single HTML file — no build step, no dependencies, no framework. Just open it and edit.
+
+---
+
+*Not affiliated with Games Workshop. Warhammer 40,000 is a trademark of Games Workshop Ltd. This tool is a fan-made utility for personal use.*
