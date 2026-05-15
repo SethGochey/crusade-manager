@@ -5,264 +5,277 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Crusade Manager — Warhammer 40K</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --gold: #C9963A;
-    --gold-light: #E8BA5A;
-    --gold-dark: #8A6420;
-    --blood: #8B1A1A;
-    --blood-dark: #5A0A0A;
-    --parchment: #1A1410;
-    --surface: #12100D;
-    --surface2: #1E1A15;
-    --surface3: #261F18;
-    --surface4: #2E2620;
-    --text: #D4C4A0;
-    --text-muted: #8A7A5A;
-    --text-dim: #5A4A2A;
-    --border: #3A2E20;
-    --border-gold: #6A5030;
-    --accent: #C9963A;
-    --danger: #8B1A1A;
-    --success: #2A5A2A;
-    --success-light: #4A8A4A;
-    --info: #1A3A5A;
-    --info-light: #3A6A9A;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: 'Crimson Pro', Georgia, serif;
-    background: var(--parchment);
-    color: var(--text);
-    min-height: 100vh;
-    font-size: 16px;
-    line-height: 1.6;
-    background-image:
-      radial-gradient(ellipse at 20% 50%, rgba(139,26,26,0.04) 0%, transparent 60%),
-      radial-gradient(ellipse at 80% 20%, rgba(201,150,58,0.04) 0%, transparent 60%);
-  }
+  /* @siege-ux-inject */
+
+  /* ── Reset siege.css landing-page header/footer for app context ── */
+  body  { display: block; }
+  header { all: unset; display: block; }
+  footer { all: unset; display: block; }
+
+  /* ── Typography overrides ── */
   h1,h2,h3,h4 { font-family: 'Cinzel', serif; letter-spacing: 0.05em; }
 
-  /* Layout */
+  /* ════════════════════════════════════════════════
+     APP LAYOUT
+  ════════════════════════════════════════════════ */
   #app { display: flex; flex-direction: column; min-height: 100vh; }
-  header {
-    background: var(--surface);
+
+  /* ── Sticky app header ── */
+  #app-header {
+    background: var(--surface2);
     border-bottom: 1px solid var(--border-gold);
-    padding: 12px 24px;
+    padding: 10px 24px;
     display: flex; align-items: center; justify-content: space-between;
     position: sticky; top: 0; z-index: 100;
     box-shadow: 0 2px 20px rgba(0,0,0,0.5);
   }
   .header-title { display: flex; align-items: center; gap: 12px; }
   .skull-icon { font-size: 20px; color: var(--gold); }
-  header h1 { font-size: 18px; color: var(--gold); }
-  header .crusade-name { font-family: 'Crimson Pro', serif; color: var(--text-muted); font-size: 14px; margin-top: 2px; }
+  #app-header h1 { font-size: 18px; color: var(--gold); }
+  .crusade-name { font-family: 'Crimson Pro', serif; color: var(--text-dim); font-size: 14px; margin-top: 2px; }
 
+  /* ── Desktop nav ── */
   nav { display: flex; gap: 4px; }
   nav button {
-    background: none; border: 1px solid transparent; color: var(--text-muted);
-    padding: 6px 14px; border-radius: 4px; cursor: pointer;
+    background: none; border: 1px solid transparent; color: var(--text-dim);
+    padding: 6px 14px; border-radius: var(--radius); cursor: pointer;
     font-family: 'Cinzel', serif; font-size: 12px; letter-spacing: 0.05em;
-    transition: all 0.2s;
+    transition: all var(--transition);
   }
   nav button:hover { color: var(--gold); border-color: var(--border-gold); }
-  nav button.active { color: var(--gold); border-color: var(--gold); background: rgba(201,150,58,0.08); }
+  nav button.active { color: var(--gold); border-color: var(--border-gold); background: var(--gold-subtle); }
 
-  /* Hamburger button — hidden on desktop */
+  /* ── Hamburger ── */
   #hamburger {
     display: none; flex-direction: column; justify-content: center; gap: 5px;
     width: 36px; height: 36px; padding: 6px; cursor: pointer;
-    background: none; border: 1px solid var(--border-gold); border-radius: 4px;
+    background: none; border: 1px solid var(--border-gold); border-radius: var(--radius);
     flex-shrink: 0;
   }
-  #hamburger span {
-    display: block; height: 2px; background: var(--gold);
-    border-radius: 2px; transition: all 0.25s;
-  }
+  #hamburger span { display: block; height: 2px; background: var(--gold); border-radius: 2px; transition: all 0.25s; }
   #hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
   #hamburger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
   #hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
 
-  /* Mobile nav drawer */
+  /* ── Mobile nav drawer ── */
   #mobile-nav {
     display: none; position: fixed; top: 0; left: 0; right: 0;
-    background: var(--surface); border-bottom: 1px solid var(--border-gold);
+    background: var(--surface2); border-bottom: 1px solid var(--border-gold);
     z-index: 99; padding: 8px 12px 12px; flex-direction: column; gap: 4px;
     box-shadow: 0 8px 24px rgba(0,0,0,0.5);
   }
   #mobile-nav.open { display: flex; }
   #mobile-nav button {
-    background: none; border: 1px solid transparent; color: var(--text-muted);
-    padding: 10px 14px; border-radius: 4px; cursor: pointer; text-align: left;
+    background: none; border: 1px solid transparent; color: var(--text-dim);
+    padding: 10px 14px; border-radius: var(--radius); cursor: pointer; text-align: left;
     font-family: 'Cinzel', serif; font-size: 13px; letter-spacing: 0.05em;
-    transition: all 0.2s; width: 100%;
+    transition: all var(--transition); width: 100%;
   }
-  #mobile-nav button:hover { color: var(--gold); border-color: var(--border-gold); background: rgba(201,150,58,0.06); }
-  #mobile-nav button.active { color: var(--gold); border-color: var(--gold); background: rgba(201,150,58,0.1); }
+  #mobile-nav button:hover { color: var(--gold); border-color: var(--border-gold); background: var(--gold-subtle); }
+  #mobile-nav button.active { color: var(--gold); border-color: var(--border-gold); background: rgba(201,168,76,0.1); }
 
+  /* ── Main content area ── */
   main { flex: 1; padding: 24px; max-width: 1400px; margin: 0 auto; width: 100%; }
 
-  /* Views */
+  /* ── App footer ── */
+  #app-footer {
+    text-align: center; padding: 12px;
+    font-size: 12px; color: var(--text-muted);
+    border-top: 1px solid var(--border-dim);
+    font-family: 'Crimson Pro', serif;
+  }
+  #app-footer a {
+    color: var(--text-muted); text-decoration: none; transition: color var(--transition);
+  }
+  #app-footer a:hover { color: var(--gold); }
+
+  /* ════════════════════════════════════════════════
+     VIEWS
+  ════════════════════════════════════════════════ */
   .view { display: none; }
   .view.active { display: block; }
 
-  /* Cards */
-  .card {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 20px;
-    margin-bottom: 16px;
-  }
-  .card-header {
-    display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 16px; padding-bottom: 12px;
-    border-bottom: 1px solid var(--border);
-  }
-  .card-title { font-size: 14px; color: var(--gold); letter-spacing: 0.08em; }
+  /* ════════════════════════════════════════════════
+     CRUSADE-SPECIFIC CARD VARIANTS
+     (siege.css provides .card base)
+  ════════════════════════════════════════════════ */
+  .card { margin-bottom: 16px; }
+  .card-title { font-size: 14px; letter-spacing: 0.08em; }
 
-  /* Buttons */
+  /* ════════════════════════════════════════════════
+     BUTTON EXTENSIONS
+     (siege.css provides .btn, .btn-gold, .btn-ghost, .btn-danger, .btn-sm, .btn-lg)
+  ════════════════════════════════════════════════ */
+
+  /* crusade-manager still uses .btn / .btn-primary naming in JS — alias btn-primary → btn-gold visually */
+  .btn-primary {
+    background: linear-gradient(135deg, var(--gold-dim), var(--gold));
+    color: var(--surface); border-color: var(--gold);
+    font-family: 'Cinzel', serif; font-size: 12px; letter-spacing: 0.05em;
+  }
+  .btn-primary:hover { background: linear-gradient(135deg, var(--gold), #e8c060); box-shadow: 0 0 16px var(--gold-glow); }
+
+  /* Base .btn override to match crusade-manager's Cinzel styling */
   .btn {
-    padding: 8px 16px; border-radius: 4px; border: 1px solid var(--border-gold);
-    cursor: pointer; font-family: 'Cinzel', serif; font-size: 12px;
-    letter-spacing: 0.05em; transition: all 0.2s; color: var(--gold);
-    background: rgba(201,150,58,0.05);
+    font-family: 'Cinzel', serif; font-size: 12px; letter-spacing: 0.05em;
+    padding: 8px 16px;
   }
-  .btn:hover { background: rgba(201,150,58,0.15); border-color: var(--gold); }
-  .btn-primary { background: var(--gold); color: var(--parchment); border-color: var(--gold); }
-  .btn-primary:hover { background: var(--gold-light); }
-  .btn-danger { border-color: var(--blood); color: #E04A4A; background: rgba(139,26,26,0.1); }
-  .btn-danger:hover { background: rgba(139,26,26,0.25); }
   .btn-sm { padding: 4px 10px; font-size: 11px; }
-  .btn-ghost { border-color: transparent; background: none; color: var(--text-muted); }
-  .btn-ghost:hover { color: var(--text); background: rgba(255,255,255,0.05); }
 
-  /* Forms */
+  /* ════════════════════════════════════════════════
+     FORM EXTENSIONS
+     (siege.css provides .form-group, .form-label, .form-input, .form-select, .form-row)
+  ════════════════════════════════════════════════ */
   .form-group { margin-bottom: 14px; }
-  label { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px; font-family: 'Cinzel', serif; letter-spacing: 0.05em; }
+  label {
+    display: block; font-size: 12px; color: var(--text-dim); margin-bottom: 4px;
+    font-family: 'Cinzel', serif; letter-spacing: 0.05em;
+  }
   input, select, textarea {
     width: 100%; padding: 8px 12px; background: var(--surface3);
-    border: 1px solid var(--border); border-radius: 4px;
+    border: 1px solid var(--border-dim); border-radius: var(--radius);
     color: var(--text); font-family: 'Crimson Pro', serif; font-size: 15px;
-    transition: border-color 0.2s;
+    transition: border-color var(--transition); outline: none;
   }
-  input:focus, select:focus { outline: none; border-color: var(--gold); }
+  input:focus, select:focus { border-color: var(--gold); box-shadow: 0 0 0 2px var(--gold-glow); }
   select option { background: var(--surface3); }
-  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .form-row   { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
 
-  /* Grid layouts */
+  /* ════════════════════════════════════════════════
+     GRID LAYOUTS
+  ════════════════════════════════════════════════ */
   .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
   .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
   .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
 
-  /* Tables */
+  /* ════════════════════════════════════════════════
+     TABLE EXTENSIONS
+     (siege.css provides .data-table)
+  ════════════════════════════════════════════════ */
   table { width: 100%; border-collapse: collapse; font-size: 14px; }
-  th { font-family: 'Cinzel', serif; font-size: 11px; color: var(--gold); letter-spacing: 0.08em; padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--border-gold); }
-  td { padding: 8px 12px; border-bottom: 1px solid var(--border); color: var(--text); }
-  tr:hover td { background: rgba(201,150,58,0.04); }
+  th {
+    font-family: 'Cinzel', serif; font-size: 11px; color: var(--gold);
+    letter-spacing: 0.08em; padding: 8px 12px; text-align: left;
+    border-bottom: 1px solid var(--border-gold);
+  }
+  td { padding: 8px 12px; border-bottom: 1px solid var(--border-dim); color: var(--text); }
+  tr:hover td { background: var(--gold-subtle); }
   .td-center { text-align: center; }
-  .td-right { text-align: right; }
+  .td-right  { text-align: right; }
 
-  /* Stats pills */
+  /* ════════════════════════════════════════════════
+     CRUSADE-SPECIFIC COMPONENTS
+  ════════════════════════════════════════════════ */
+
+  /* ── Stat pills ── */
   .stat-pill {
     display: inline-flex; align-items: center; gap: 6px;
     padding: 3px 10px; border-radius: 20px; font-size: 12px;
     font-family: 'Cinzel', serif;
   }
-  .pill-win { background: rgba(42,90,42,0.3); color: #6ABF6A; border: 1px solid rgba(74,138,74,0.4); }
+  .pill-win  { background: rgba(42,90,42,0.3); color: #6ABF6A; border: 1px solid rgba(74,138,74,0.4); }
   .pill-loss { background: rgba(139,26,26,0.3); color: #E06060; border: 1px solid rgba(139,26,26,0.4); }
-  .pill-gold { background: rgba(201,150,58,0.15); color: var(--gold); border: 1px solid var(--border-gold); }
+  .pill-gold { background: rgba(201,168,76,0.15); color: var(--gold); border: 1px solid var(--border-gold); }
 
-  /* Alliance colors */
+  /* ── Alliance color dot ── */
   .alliance-badge {
     display: inline-block; width: 10px; height: 10px;
     border-radius: 50%; margin-right: 6px; flex-shrink: 0;
   }
 
-  /* Phase indicator */
+  /* ── Phase indicator bar ── */
   .phase-bar { display: flex; gap: 8px; margin-bottom: 24px; }
   .phase-seg {
-    flex: 1; padding: 8px 16px; border-radius: 4px;
-    border: 1px solid var(--border); background: var(--surface2);
+    flex: 1; padding: 8px 16px; border-radius: var(--radius);
+    border: 1px solid var(--border-dim); background: var(--surface2);
     text-align: center; font-family: 'Cinzel', serif; font-size: 11px;
-    color: var(--text-muted); transition: all 0.2s;
+    color: var(--text-dim); transition: all var(--transition);
   }
-  .phase-seg.current { border-color: var(--gold); color: var(--gold); background: rgba(201,150,58,0.08); }
-  .phase-seg.complete { border-color: var(--border-gold); color: var(--text-dim); }
-  .phase-seg .phase-winner { font-size: 10px; color: var(--success-light); margin-top: 2px; }
+  .phase-seg.current  { border-color: var(--gold); color: var(--gold); background: var(--gold-subtle); }
+  .phase-seg.complete { border-color: var(--border-gold); color: var(--text-muted); }
+  .phase-seg .phase-winner { font-size: 10px; color: #6ABF6A; margin-top: 2px; }
 
-  /* Match result tags */
-  .result-win { color: #6ABF6A; font-weight: 600; }
+  /* ── Match result colours ── */
+  .result-win  { color: #6ABF6A; font-weight: 600; }
   .result-loss { color: #E06060; font-weight: 600; }
   .result-draw { color: var(--gold); }
 
-  /* Modal */
-  .modal-overlay {
-    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7);
-    z-index: 200; align-items: center; justify-content: center;
-  }
-  .modal-overlay.open { display: flex; }
-  .modal {
-    background: var(--surface2); border: 1px solid var(--border-gold);
-    border-radius: 8px; padding: 24px; max-width: 600px; width: 90%;
-    max-height: 85vh; overflow-y: auto;
-  }
-  .modal h3 { color: var(--gold); margin-bottom: 20px; font-size: 16px; }
-  .modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); }
-
-  /* Pairing cards */
+  /* ── Pairing cards ── */
   .pairing-card {
-    background: var(--surface3); border: 1px solid var(--border);
-    border-radius: 6px; padding: 16px; margin-bottom: 12px;
+    background: var(--surface3); border: 1px solid var(--border-dim);
+    border-radius: var(--radius); padding: 16px; margin-bottom: 12px;
     display: flex; align-items: center; gap: 16px;
   }
   .pairing-player { flex: 1; }
   .pairing-vs { color: var(--gold); font-family: 'Cinzel', serif; font-size: 18px; padding: 0 8px; }
-  .pairing-path { font-size: 11px; color: var(--text-muted); font-family: 'Cinzel', serif; margin-top: 4px; }
+  .pairing-path { font-size: 11px; color: var(--text-dim); font-family: 'Cinzel', serif; margin-top: 4px; }
 
-  /* Overview stats */
+  /* ── Overview stat boxes ── */
   .stat-box {
-    background: var(--surface3); border: 1px solid var(--border);
-    border-radius: 6px; padding: 14px; text-align: center;
+    background: var(--surface3); border: 1px solid var(--border-dim);
+    border-radius: var(--radius); padding: 14px; text-align: center;
   }
   .stat-box .val { font-size: 28px; font-family: 'Cinzel', serif; color: var(--gold); }
-  .stat-box .lbl { font-size: 11px; color: var(--text-muted); font-family: 'Cinzel', serif; letter-spacing: 0.08em; margin-top: 2px; }
+  .stat-box .lbl { font-size: 11px; color: var(--text-dim); font-family: 'Cinzel', serif; letter-spacing: 0.08em; margin-top: 2px; }
 
-  /* Setup wizard */
-  .wizard-step { display: none; }
-  .wizard-step.active { display: block; }
+  /* ── Setup wizard ── */
   .setup-hero { text-align: center; padding: 40px 20px; }
   .setup-hero h1 { font-size: 36px; color: var(--gold); margin-bottom: 8px; }
-  .setup-hero p { color: var(--text-muted); font-size: 18px; }
+  .setup-hero p  { color: var(--text-dim); font-size: 18px; }
 
-  /* Ornament */
-  .ornament { text-align: center; color: var(--text-dim); font-size: 16px; margin: 16px 0; letter-spacing: 8px; }
+  /* ── Ornament divider ── */
+  .ornament { text-align: center; color: var(--text-muted); font-size: 16px; margin: 16px 0; letter-spacing: 8px; }
 
-  /* Responsive */
+  /* ── Alert variants ── */
+  .alert { padding: 10px 14px; border-radius: var(--radius); margin-bottom: 12px; font-size: 14px; }
+  .alert-info    { background: rgba(26,58,90,0.4);  border: 1px solid rgba(58,106,154,0.5); color: #7AAAD0; }
+  .alert-warn    { background: rgba(90,74,26,0.4);  border: 1px solid var(--border-gold);   color: #E8BA5A; }
+  .alert-success { background: rgba(42,90,42,0.3);  border: 1px solid rgba(74,138,74,0.4);  color: #6ABF6A; }
+
+  /* ── Empty state (crusade-specific override) ── */
+  .empty-state { text-align: center; padding: 40px; color: var(--text-muted); font-style: italic; }
+
+  /* ── Tag pills ── */
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 11px; font-family: 'Cinzel', serif; }
+  .tag-phase { background: var(--gold-subtle); color: var(--gold); border: 1px solid var(--border-gold); }
+
+  /* ── Utility text classes ── */
+  .txt-muted-sm { color: var(--text-dim);   font-size: 12px; }
+  .txt-dim-sm   { color: var(--text-muted); font-size: 11px; }
+  .cinzel-sm    { font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 0.05em; }
+
+  /* ════════════════════════════════════════════════
+     TOAST (crusade-manager version — bottom-right)
+     siege.css provides #toast-container; crusade-manager
+     used a single #toast element, so keep the original.
+  ════════════════════════════════════════════════ */
+  #toast {
+    position: fixed; bottom: 24px; right: 24px; z-index: 300;
+    background: var(--surface4); border: 1px solid var(--border-gold);
+    padding: 10px 20px; border-radius: var(--radius-lg); color: var(--gold);
+    font-family: 'Cinzel', serif; font-size: 13px;
+    transform: translateY(100px); opacity: 0; transition: all 0.3s;
+  }
+  #toast.show { transform: translateY(0); opacity: 1; }
+
+  /* ════════════════════════════════════════════════
+     RESPONSIVE
+  ════════════════════════════════════════════════ */
   @media (max-width: 768px) {
     .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
-    .form-row, .form-row-3 { grid-template-columns: 1fr; }
-    nav { display: none; }
-    #hamburger { display: flex; }
-    main { padding: 16px 12px; }
-    header { padding: 10px 14px; }
+    .form-row, .form-row-3    { grid-template-columns: 1fr; }
+    nav         { display: none; }
+    #hamburger  { display: flex; }
+    main        { padding: 16px 12px; }
+    #app-header { padding: 10px 14px; }
   }
 
-  /* Tooltips */
-  [title] { cursor: help; }
-
-  /* Utility text classes */
-  .txt-muted-sm { color: var(--text-muted); font-size: 12px; }
-  .txt-dim-sm   { color: var(--text-dim);   font-size: 11px; }
-  .cinzel-sm    { font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 0.05em; }
-  /* Scrollbar */
-  ::-webkit-scrollbar { width: 6px; }
-  ::-webkit-scrollbar-track { background: var(--surface); }
-  ::-webkit-scrollbar-thumb { background: var(--border-gold); border-radius: 3px; }
-
-  /* Print */
+  /* ════════════════════════════════════════════════
+     PRINT
+  ════════════════════════════════════════════════ */
   @media print {
     * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     body { background: #fff !important; color: #000 !important; font-family: Georgia, serif; font-size: 11pt; }
@@ -286,31 +299,13 @@
     @page { margin: 18mm 16mm; }
     @page { @bottom-center { content: counter(page) " of " counter(pages); font-size: 8pt; color: #888; } }
   }
-
-  /* Alert */
-  .alert { padding: 10px 14px; border-radius: 4px; margin-bottom: 12px; font-size: 14px; }
-  .alert-info { background: rgba(26,58,90,0.4); border: 1px solid rgba(58,106,154,0.5); color: #7AAAD0; }
-  .alert-warn { background: rgba(90,74,26,0.4); border: 1px solid var(--border-gold); color: var(--gold-light); }
-  .alert-success { background: rgba(42,90,42,0.3); border: 1px solid rgba(74,138,74,0.4); color: #6ABF6A; }
-
-  .empty-state { text-align: center; padding: 40px; color: var(--text-dim); font-style: italic; }
-
-  .tag { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 11px; font-family: 'Cinzel', serif; }
-  .tag-phase { background: rgba(201,150,58,0.1); color: var(--gold); border: 1px solid var(--border-gold); }
-
-  #toast {
-    position: fixed; bottom: 24px; right: 24px; z-index: 300;
-    background: var(--surface4); border: 1px solid var(--border-gold);
-    padding: 10px 20px; border-radius: 6px; color: var(--gold);
-    font-family: 'Cinzel', serif; font-size: 13px;
-    transform: translateY(100px); opacity: 0; transition: all 0.3s;
-  }
-  #toast.show { transform: translateY(0); opacity: 1; }
 </style>
 </head>
 <body>
 <div id="app">
-  <!-- Setup Screen -->
+  <!-- ════════════════════════════════════════════════
+       SETUP SCREEN
+  ════════════════════════════════════════════════ -->
   <div id="setup-screen">
     <div style="max-width:600px;margin:0 auto;padding:40px 24px;">
       <div class="setup-hero">
@@ -332,7 +327,7 @@
           <div class="form-group">
             <label>Number of Alliances</label>
             <input id="setup-alliances" type="number" min="0" max="99" value="3" oninput="renderAllianceNameInputs()">
-            <div style="font-size:11px;color:var(--text-dim);margin-top:4px;">Set to 0 for an individual (no-alliance) tournament</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">Set to 0 for an individual (no-alliance) tournament</div>
           </div>
           <div class="form-group">
             <label>Pairing Method</label>
@@ -343,7 +338,7 @@
           </div>
         </div>
 
-        <div style="background:var(--surface3);border-radius:6px;padding:14px;margin-bottom:14px;" id="setup-players-section">
+        <div style="background:var(--surface3);border-radius:var(--radius);padding:14px;margin-bottom:14px;" id="setup-players-section">
           <div style="font-size:11px;color:var(--gold);font-family:'Cinzel',serif;letter-spacing:0.08em;margin-bottom:10px;">PLAYER COUNT (sets default rounds)</div>
           <div class="form-row">
             <div class="form-group" style="margin-bottom:0;">
@@ -351,7 +346,7 @@
               <input id="setup-playercount" type="number" min="2" max="64" value="8" oninput="updateSetupDefaults()">
             </div>
             <div class="form-group" style="margin-bottom:0;">
-              <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px;font-family:'Cinzel',serif;letter-spacing:0.05em;">CALCULATED DEFAULT</div>
+              <div style="font-size:12px;color:var(--text-dim);margin-bottom:4px;font-family:'Cinzel',serif;letter-spacing:0.05em;">CALCULATED DEFAULT</div>
               <div id="setup-rounds-preview" style="font-size:22px;font-family:'Cinzel',serif;color:var(--gold);padding-top:4px;">—</div>
               <div class="txt-dim-sm">total rounds / <span id="setup-rpp-preview">—</span> per phase</div>
             </div>
@@ -360,9 +355,9 @@
 
         <div class="form-row-3">
           <div class="form-group">
-            <label>Rounds Per Phase <span style="color:var(--text-dim);font-size:10px;">(override)</span></label>
+            <label>Rounds Per Phase <span style="color:var(--text-muted);font-size:10px;">(override)</span></label>
             <input id="setup-rpp" type="number" min="1" max="40" value="" placeholder="Auto">
-            <div style="font-size:11px;color:var(--text-dim);margin-top:4px;">Leave blank to use default</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">Leave blank to use default</div>
           </div>
           <div class="form-group">
             <label>Delay Rematches?</label>
@@ -376,6 +371,7 @@
             <input id="setup-phases" type="number" min="1" max="99" value="4" oninput="updateSetupDefaults()">
           </div>
         </div>
+
         <div class="form-group">
           <label>Phase Victory Method</label>
           <select id="setup-spmethod">
@@ -403,9 +399,12 @@
     </div>
   </div>
 
-  <!-- Main App -->
-  <div id="main-app" style="display:none;">
-    <header>
+  <!-- ════════════════════════════════════════════════
+       MAIN APP
+  ════════════════════════════════════════════════ -->
+  <div id="main-app" style="display:none;flex-direction:column;min-height:100vh;">
+
+    <header id="app-header">
       <div class="header-title">
         <div class="skull-icon">☩</div>
         <div>
@@ -426,6 +425,7 @@
         <span></span><span></span><span></span>
       </button>
     </header>
+
     <div id="mobile-nav">
       <button class="active" onclick="showView('overview')">Overview</button>
       <button onclick="showView('alliances')">Alliances &amp; Rosters</button>
@@ -457,7 +457,7 @@
         </div>
       </div>
 
-      <!-- TEAMS -->
+      <!-- ALLIANCES & ROSTERS -->
       <div id="view-alliances" class="view">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
           <h2 style="font-size:16px;color:var(--gold);" id="alliances-view-title">Alliances &amp; Rosters</h2>
@@ -476,10 +476,10 @@
           <button class="btn btn-sm" onclick="openRecordMatchModal()">+ Record Match</button>
         </div>
         <div id="matches-filter" style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
-          <select id="filter-round" onchange="renderMatches()" style="width:auto;padding:6px 10px;font-size:13px;">
+          <select id="filter-round"  onchange="renderMatches()" style="width:auto;padding:6px 10px;font-size:13px;">
             <option value="">All Rounds</option>
           </select>
-          <select id="filter-phase" onchange="renderMatches()" style="width:auto;padding:6px 10px;font-size:13px;">
+          <select id="filter-phase"  onchange="renderMatches()" style="width:auto;padding:6px 10px;font-size:13px;">
             <option value="">All Phases</option>
           </select>
           <select id="filter-player" onchange="renderMatches()" style="width:auto;padding:6px 10px;font-size:13px;">
@@ -523,7 +523,7 @@
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
           <div>
             <h2 style="font-size:16px;color:var(--gold);">Generate Pairings</h2>
-            <div style="font-size:13px;color:var(--text-muted);margin-top:4px;">Round <span id="next-round-num">1</span></div>
+            <div style="font-size:13px;color:var(--text-dim);margin-top:4px;">Round <span id="next-round-num">1</span></div>
           </div>
           <div style="display:flex;gap:8px;">
             <button class="btn btn-sm" onclick="generatePairings()">Generate Next Round</button>
@@ -580,7 +580,7 @@
                   <option value="raw">Raw SP Total</option>
                   <option value="per_match">SP per Match Played</option>
                 </select>
-                <div style="font-size:11px;color:var(--text-dim);margin-top:4px;" id="settings-spmethod-hint"></div>
+                <div style="font-size:11px;color:var(--text-muted);margin-top:4px;" id="settings-spmethod-hint"></div>
               </div>
               <div class="form-group" id="settings-teammode-row">
                 <label>Play Format</label>
@@ -595,7 +595,7 @@
           <div>
             <div class="card">
               <div class="card-header"><span class="card-title">Data Management</span></div>
-              <p style="color:var(--text-muted);font-size:14px;margin-bottom:16px;">Export or import your crusade data as JSON.</p>
+              <p style="color:var(--text-dim);font-size:14px;margin-bottom:16px;">Export or import your crusade data as JSON.</p>
               <div style="display:flex;flex-direction:column;gap:8px;">
                 <button class="btn" onclick="exportData()">Export Crusade Data</button>
                 <button class="btn" onclick="document.getElementById('import-file').click()">Import Crusade Data</button>
@@ -620,44 +620,37 @@
             <div style="display:flex;flex-direction:column;gap:12px;">
               <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-family:'Crimson Pro',serif;font-size:15px;">
                 <input type="checkbox" id="pc-cover" checked style="width:16px;height:16px;" onchange="renderPrintPreview()">
-                Cover Page
-                <span class="txt-muted-sm">Crusade name, date, round &amp; phase</span>
+                Cover Page <span class="txt-muted-sm">Crusade name, date, round &amp; phase</span>
               </label>
               <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-family:'Crimson Pro',serif;font-size:15px;">
                 <input type="checkbox" id="pc-phases" checked style="width:16px;height:16px;" onchange="renderPrintPreview()">
-                Phase Summary
-                <span class="txt-muted-sm">SP standings &amp; phase winners</span>
+                Phase Summary <span class="txt-muted-sm">SP standings &amp; phase winners</span>
               </label>
               <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-family:'Crimson Pro',serif;font-size:15px;">
                 <input type="checkbox" id="pc-rosters" checked style="width:16px;height:16px;" onchange="renderPrintPreview()">
-                Alliance Rosters
-                <span class="txt-muted-sm">Player name, faction, W/L per alliance</span>
+                Alliance Rosters <span class="txt-muted-sm">Player name, faction, W/L per alliance</span>
               </label>
               <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-family:'Crimson Pro',serif;font-size:15px;">
                 <input type="checkbox" id="pc-standings" checked style="width:16px;height:16px;" onchange="renderPrintPreview()">
-                Individual Standings
-                <span class="txt-muted-sm">Full player table with Win%, VP, OGW%, Path</span>
+                Individual Standings <span class="txt-muted-sm">Full player table with Win%, VP, OGW%, Path</span>
               </label>
               <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-family:'Crimson Pro',serif;font-size:15px;">
                 <input type="checkbox" id="pc-pairings" checked style="width:16px;height:16px;" onchange="renderPrintPreview()">
-                Current Pairings
-                <span class="txt-muted-sm">Only included if pairings are generated</span>
+                Current Pairings <span class="txt-muted-sm">Only included if pairings are generated</span>
               </label>
               <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-family:'Crimson Pro',serif;font-size:15px;">
                 <input type="checkbox" id="pc-history" style="width:16px;height:16px;" onchange="renderPrintPreview()">
-                Match History
-                <span class="txt-muted-sm">All matches grouped by round (can be long)</span>
+                Match History <span class="txt-muted-sm">All matches grouped by round (can be long)</span>
               </label>
               <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-family:'Crimson Pro',serif;font-size:15px;">
                 <input type="checkbox" id="pc-scoresheet" style="width:16px;height:16px;" onchange="renderPrintPreview()">
-                Round Scoresheet
-                <span class="txt-muted-sm">All rounds with write-in space — completed rounds pre-filled, future rounds blank</span>
+                Round Scoresheet <span class="txt-muted-sm">All rounds with write-in space — completed rounds pre-filled, future rounds blank</span>
               </label>
             </div>
           </div>
           <div class="card">
             <div class="card-header"><span class="card-title">Preview</span></div>
-            <div id="print-preview-summary" style="color:var(--text-muted);font-size:14px;line-height:2;"></div>
+            <div id="print-preview-summary" style="color:var(--text-dim);font-size:14px;line-height:2;"></div>
             <div class="ornament" style="margin:20px 0;">✦</div>
             <div class="alert alert-info" style="font-size:13px;">
               Clicking <strong>Print Now</strong> will open your browser's print dialog.
@@ -667,21 +660,40 @@
         </div>
       </div>
 
-      <!-- Hidden print render target (replaces all other views at print time) -->
+      <!-- Hidden print render target -->
       <div id="view-print-render" class="view" style="display:none;"></div>
-
     </main>
-    <footer style="text-align:center;padding:12px;font-size:12px;color:var(--text-dim);border-top:1px solid var(--border);font-family:'Crimson Pro',serif;">
-      <a href="https://github.com/SethGochey/crusade-manager/blob/main/README.md" target="_blank" rel="noopener"
-         style="color:var(--text-dim);text-decoration:none;transition:color 0.2s;"
-         onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color='var(--text-dim)'">
+
+    <footer id="app-footer">
+      <a href="https://github.com/SethGochey/crusade-manager/blob/main/README.md" target="_blank" rel="noopener">
         ☩ How to use Crusade Manager
       </a>
     </footer>
   </div>
 </div>
 
-<!-- Modals -->
+<!-- ════════════════════════════════════════════════
+     MODALS  (siege.css provides .modal-overlay → .modal-backdrop structure;
+              crusade-manager uses .modal-overlay class — keep as-is in HTML,
+              siege.css .modal-backdrop rules cover them via .modal-backdrop.open display:flex)
+════════════════════════════════════════════════ -->
+<style>
+  /* crusade-manager uses .modal-overlay; remap to siege.css modal behaviour */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+    z-index: 200; align-items: center; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal-overlay .modal {
+    background: var(--surface2); border: 1px solid var(--border-gold);
+    border-radius: var(--radius-lg); padding: 24px;
+    max-width: 600px; width: 90%; max-height: 85vh; overflow-y: auto;
+    box-shadow: 0 8px 40px var(--shadow);
+  }
+  .modal-overlay .modal h3 { color: var(--gold); margin-bottom: 20px; font-size: 16px; }
+  .modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border-dim); }
+</style>
+
 <div class="modal-overlay" id="modal-add-player">
   <div class="modal">
     <h3>Add Player</h3>
@@ -722,16 +734,13 @@
       </div>
       <div class="form-group">
         <label>Phase (auto-calculated)</label>
-        <input id="rm-phase" type="text" readonly style="color:var(--text-muted);">
+        <input id="rm-phase" type="text" readonly style="color:var(--text-dim);">
       </div>
     </div>
-    <div style="background:var(--surface3);border-radius:6px;padding:16px;margin-bottom:16px;">
+    <div style="background:var(--surface3);border-radius:var(--radius);padding:16px;margin-bottom:16px;">
       <div style="font-size:11px;color:var(--gold);font-family:'Cinzel',serif;letter-spacing:0.08em;margin-bottom:12px;">PLAYER 1</div>
       <div class="form-row">
-        <div class="form-group">
-          <label>Player</label>
-          <select id="rm-p1"></select>
-        </div>
+        <div class="form-group"><label>Player</label><select id="rm-p1"></select></div>
         <div class="form-group">
           <label>Result</label>
           <select id="rm-p1-result">
@@ -742,23 +751,14 @@
         </div>
       </div>
       <div class="form-row">
-        <div class="form-group">
-          <label>Victory Points</label>
-          <input id="rm-p1-vp" type="number" min="0" value="0">
-        </div>
-        <div class="form-group">
-          <label>Strategic Points Contributed</label>
-          <input id="rm-p1-sp" type="number" min="0" value="0">
-        </div>
+        <div class="form-group"><label>Victory Points</label><input id="rm-p1-vp" type="number" min="0" value="0"></div>
+        <div class="form-group"><label>Strategic Points Contributed</label><input id="rm-p1-sp" type="number" min="0" value="0"></div>
       </div>
     </div>
-    <div style="background:var(--surface3);border-radius:6px;padding:16px;margin-bottom:16px;">
+    <div style="background:var(--surface3);border-radius:var(--radius);padding:16px;margin-bottom:16px;">
       <div style="font-size:11px;color:var(--gold);font-family:'Cinzel',serif;letter-spacing:0.08em;margin-bottom:12px;">PLAYER 2</div>
       <div class="form-row">
-        <div class="form-group">
-          <label>Player</label>
-          <select id="rm-p2"></select>
-        </div>
+        <div class="form-group"><label>Player</label><select id="rm-p2"></select></div>
         <div class="form-group">
           <label>Result</label>
           <select id="rm-p2-result">
@@ -769,14 +769,8 @@
         </div>
       </div>
       <div class="form-row">
-        <div class="form-group">
-          <label>Victory Points</label>
-          <input id="rm-p2-vp" type="number" min="0" value="0">
-        </div>
-        <div class="form-group">
-          <label>Strategic Points Contributed</label>
-          <input id="rm-p2-sp" type="number" min="0" value="0">
-        </div>
+        <div class="form-group"><label>Victory Points</label><input id="rm-p2-vp" type="number" min="0" value="0"></div>
+        <div class="form-group"><label>Strategic Points Contributed</label><input id="rm-p2-sp" type="number" min="0" value="0"></div>
       </div>
     </div>
     <div class="modal-footer">
@@ -831,11 +825,11 @@
   <div class="modal">
     <h3>Record Bye SP</h3>
     <input type="hidden" id="bsp-playerid">
-    <p style="color:var(--text-muted);font-size:14px;margin-bottom:16px;" id="bsp-desc"></p>
+    <p style="color:var(--text-dim);font-size:14px;margin-bottom:16px;" id="bsp-desc"></p>
     <div class="form-row">
       <div class="form-group">
         <label>Round</label>
-        <input id="bsp-round" type="number" min="1" readonly style="color:var(--text-muted);">
+        <input id="bsp-round" type="number" min="1" readonly style="color:var(--text-dim);">
       </div>
       <div class="form-group">
         <label>Strategic Points Earned</label>
@@ -935,7 +929,6 @@ function renderAll() {
 function calcDefaultRoundsPerPhase(numPlayers, numPhases, pairing) {
   if (pairing === 'winpath') return 3;
   if (numPlayers < 2) return 3;
-  // Round-robin: n-1 rounds if even, n if odd
   const totalRounds = numPlayers % 2 === 0 ? numPlayers - 1 : numPlayers;
   return Math.max(1, Math.ceil(totalRounds / numPhases));
 }
@@ -950,10 +943,10 @@ function updateSetupDefaults() {
   const rppPreview = el('setup-rpp-preview');
   if (preview) preview.textContent = totalRounds;
   if (rppPreview) rppPreview.textContent = rpp;
-  // Show/hide player count section only for round-robin
   const sec = el('setup-players-section');
   if (sec) sec.style.display = pairing === 'winpath' ? 'none' : 'block';
 }
+
 function renderAllianceNameInputs() {
   const n = parseInt(el('setup-alliances').value) || 0;
   const elNode = el('alliance-name-inputs');
@@ -963,7 +956,7 @@ function renderAllianceNameInputs() {
     </div>`;
     return;
   }
-  let html = `<div style="font-size:12px;color:var(--text-muted);font-family:'Cinzel',serif;letter-spacing:0.05em;margin-bottom:8px;">ALLIANCE NAMES</div>`;
+  let html = `<div style="font-size:12px;color:var(--text-dim);font-family:'Cinzel',serif;letter-spacing:0.05em;margin-bottom:8px;">ALLIANCE NAMES</div>`;
   html += `<div class="form-row${n > 2 ? '-3' : ''}">`;
   const defaultNames = ['Gatebreakers','Desecrators','Marauders','Alliance Delta','Alliance Epsilon','Alliance Zeta','Alliance Eta','Alliance Theta'];
   for (let i = 0; i < n; i++) {
@@ -989,12 +982,9 @@ function beginCrusade() {
   state.pairing = pairing;
   state.allowRematches = allowRematches;
   state.numPhases = numPhases;
-  // Store explicit override if given; otherwise store the calculated default so it's stable
-  if (rppVal) {
-    state.roundsPerPhase = parseInt(rppVal);
-  } else {
-    state.roundsPerPhase = calcDefaultRoundsPerPhase(setupPlayerCount || 8, numPhases, pairing);
-  }
+  state.roundsPerPhase = rppVal
+    ? parseInt(rppVal)
+    : calcDefaultRoundsPerPhase(setupPlayerCount || 8, numPhases, pairing);
   state.spMethod = el('setup-spmethod').value || 'raw';
   state.teamMode = el('setup-teammode').value === '1';
 
@@ -1009,21 +999,12 @@ function beginCrusade() {
 }
 
 // ─── Phase Logic ─────────────────────────────────────────────────────────────
-function getRoundsPerPhase() {
-  // Always use stored value (set at crusade creation from player count or explicit override)
-  return state.roundsPerPhase || 3;
-}
-
-function getPhaseForRound(round) {
-  return Math.min(Math.ceil(round / getRoundsPerPhase()), state.numPhases);
-}
+function getRoundsPerPhase() { return state.roundsPerPhase || 3; }
+function getPhaseForRound(round) { return Math.min(Math.ceil(round / getRoundsPerPhase()), state.numPhases); }
 function getCurrentPhase() { return getPhaseForRound(state.currentRound); }
-
 function getPhaseRoundRange(phase) {
   const rpp = getRoundsPerPhase();
-  const start = (phase - 1) * rpp + 1;
-  const end = phase * rpp;
-  return { start, end };
+  return { start: (phase - 1) * rpp + 1, end: phase * rpp };
 }
 
 // ─── Player Stats ─────────────────────────────────────────────────────────────
@@ -1036,7 +1017,7 @@ function getPlayerStats(playerId, upToRound = null) {
   let winPath = [];
   const sortedMatches = [...matches].sort((a,b) => a.round - b.round);
   sortedMatches.forEach(m => {
-    if (m.isBye) return; // bye rounds don't count toward W/L/path
+    if (m.isBye) return;
     if (m.p1 === playerId) {
       vpFor += m.p1vp; vpAgainst += m.p2vp;
       if (m.p1result === 'win') { wins++; winPath.push('W'); }
@@ -1050,8 +1031,7 @@ function getPlayerStats(playerId, upToRound = null) {
     }
   });
   const gp = wins + losses + draws;
-  const winPct = gp > 0 ? wins / gp : 0;
-  return { wins, losses, draws, gp, vpFor, vpAgainst, winPct, winPath, matches: sortedMatches };
+  return { wins, losses, draws, gp, vpFor, vpAgainst, winPct: gp > 0 ? wins / gp : 0, winPath, matches: sortedMatches };
 }
 
 function getOGW(playerId) {
@@ -1063,19 +1043,14 @@ function getOGW(playerId) {
     if (oppId !== '__BYE__') opponentIds.push(oppId);
   });
   if (opponentIds.length === 0) return 0;
-  const total = opponentIds.reduce((sum, oid) => {
-    const os = getPlayerStats(oid);
-    return sum + os.winPct;
-  }, 0);
-  return total / opponentIds.length;
+  return opponentIds.reduce((sum, oid) => sum + getPlayerStats(oid).winPct, 0) / opponentIds.length;
 }
 
 function getWinPathKey(playerId) { return getPlayerStats(playerId).winPath.join(''); }
 
 function getEnrichedStats(playerId) {
   const stats = getPlayerStats(playerId);
-  const ogw = getOGW(playerId);
-  return { ...stats, ogw, winPathKey: stats.winPath.join('') };
+  return { ...stats, ogw: getOGW(playerId), winPathKey: stats.winPath.join('') };
 }
 
 // ─── SP Tracking ─────────────────────────────────────────────────────────────
@@ -1086,14 +1061,12 @@ function getAllianceSP(allianceId, phase) {
     if (m.round >= start && m.round <= end && !m.isBye) {
       const p1 = state.players.find(p => p.id === m.p1);
       const p2 = m.p2 === '__BYE__' ? null : state.players.find(p => p.id === m.p2);
-      const p1inTeam = p1 && p1.allianceId === allianceId;
-      const p2inTeam = p2 && p2.allianceId === allianceId;
-      // Cross-alliance = the two players are on different alliances (or one has no alliance)
-      const isCrossTeam = !(p1inTeam && p2inTeam);
-      if (p1inTeam) { sp += m.p1sp; if (isCrossTeam) matchesPlayed++; }
-      if (p2inTeam) { sp += m.p2sp; if (isCrossTeam) matchesPlayed++; }
+      const p1in = p1 && p1.allianceId === allianceId;
+      const p2in = p2 && p2.allianceId === allianceId;
+      const isCross = !(p1in && p2in);
+      if (p1in) { sp += m.p1sp; if (isCross) matchesPlayed++; }
+      if (p2in) { sp += m.p2sp; if (isCross) matchesPlayed++; }
     } else if (m.isBye) {
-      // Bye SP counts toward alliance SP, never toward matchesPlayed
       const p1 = state.players.find(p => p.id === m.p1);
       if (p1 && p1.allianceId === allianceId) sp += m.p1sp;
     }
@@ -1101,7 +1074,6 @@ function getAllianceSP(allianceId, phase) {
   return { sp, matchesPlayed };
 }
 
-// Returns the score used for phase winner comparison (raw SP or SP/match)
 function getAlliancePhaseScore(allianceId, phase) {
   const { sp, matchesPlayed } = getAllianceSP(allianceId, phase);
   if (state.spMethod === 'per_match' && matchesPlayed > 0) {
@@ -1118,45 +1090,36 @@ function getPhaseWinner(phase) {
     if (score > maxScore) { maxScore = score; winners = [t]; }
     else if (score === maxScore) { winners.push(t); }
   });
-  // Tie = no winner
   return winners.length === 1 ? winners[0] : null;
 }
 
-// Called when currentRound has passed the final phase
 function getCrusadeWinner() {
   if (state.alliances.length === 0) return null;
   const lastPhase = state.numPhases;
-  if (getCurrentPhase() <= lastPhase) return null; // not finished
-
+  if (getCurrentPhase() <= lastPhase) return null;
   const totals = state.alliances.map(t => {
     let totalSP = 0, totalMatches = 0;
     for (let p = 1; p <= lastPhase; p++) {
       const { sp, matchesPlayed } = getAllianceSP(t.id, p);
-      totalSP += sp;
-      totalMatches += matchesPlayed;
+      totalSP += sp; totalMatches += matchesPlayed;
     }
-    const score = (state.spMethod === 'per_match' && totalMatches > 0)
-      ? totalSP / totalMatches : totalSP;
+    const score = (state.spMethod === 'per_match' && totalMatches > 0) ? totalSP / totalMatches : totalSP;
     const phasesWon = Array.from({length: lastPhase}, (_,i) => i+1)
       .filter(p => { const w = getPhaseWinner(p); return w && w.id === t.id; }).length;
     return { alliance: t, score, phasesWon };
   });
-
   let maxScore = Math.max(...totals.map(t => t.score));
   let leaders = totals.filter(t => t.score === maxScore);
   if (leaders.length === 1) return { winner: leaders[0].alliance, reason: 'SP total' };
-
   let maxPhases = Math.max(...leaders.map(t => t.phasesWon));
   leaders = leaders.filter(t => t.phasesWon === maxPhases);
   if (leaders.length === 1) return { winner: leaders[0].alliance, reason: 'phases won' };
-
   return { winner: null, reason: 'draw' };
 }
 
 // ─── Render Phase Bar ─────────────────────────────────────────────────────────
 function renderPhaseBar() {
   const currentPhase = getCurrentPhase();
-  const rpp = getRoundsPerPhase();
   let html = '';
   for (let p = 1; p <= state.numPhases; p++) {
     const { start, end } = getPhaseRoundRange(p);
@@ -1170,10 +1133,9 @@ function renderPhaseBar() {
     html += `<div class="${cls}">
       <div>Phase ${p} — Rounds ${start}–${end}</div>
       ${winner ? `<div class="phase-winner">✦ ${winner.name}</div>` : ''}
-      ${phaseTied ? `<div class="phase-winner" style="color:var(--text-muted);">— Tied</div>` : ''}
+      ${phaseTied ? `<div class="phase-winner" style="color:var(--text-dim);">— Tied</div>` : ''}
     </div>`;
   }
-  // Crusade complete banner
   const crusadeResult = getCrusadeWinner();
   if (crusadeResult) {
     const { winner, reason } = crusadeResult;
@@ -1190,13 +1152,11 @@ function renderPhaseBar() {
 function renderOverviewStats() {
   const currentPhase = getCurrentPhase();
   const totalMatches = state.matches.filter(m => !m.isBye).length;
-  const totalPlayers = state.players.length;
-
   el('overview-stats').innerHTML = `
     <div class="stat-box"><div class="val">${state.currentRound}</div><div class="lbl">Current Round</div></div>
     <div class="stat-box"><div class="val">${currentPhase} / ${state.numPhases}</div><div class="lbl">Current Phase</div></div>
     <div class="stat-box"><div class="val">${totalMatches}</div><div class="lbl">Matches Played</div></div>
-    <div class="stat-box"><div class="val">${totalPlayers}</div><div class="lbl">Players Enlisted</div></div>
+    <div class="stat-box"><div class="val">${state.players.length}</div><div class="lbl">Players Enlisted</div></div>
   `;
 }
 
@@ -1204,13 +1164,10 @@ function renderOverviewStandings() {
   const currentPhase = getCurrentPhase();
   const spPerMatch = state.spMethod === 'per_match';
   const elNode = el('overview-standings-table');
-
   if (state.numAlliances === 0 || state.alliances.length === 0) {
-    // Individual mode: show top players by W/L
-    const rows = state.players.map(p => {
-      return { p, ...getEnrichedStats(p.id) };
-    }).sort((a,b) => b.wins - a.wins || b.ogw - a.ogw);
-    el.innerHTML = `
+    const rows = state.players.map(p => ({ p, ...getEnrichedStats(p.id) }))
+      .sort((a,b) => b.wins - a.wins || b.ogw - a.ogw);
+    elNode.innerHTML = `
       <thead><tr><th>Player</th><th>W</th><th>L</th><th>OGW%</th></tr></thead>
       <tbody>${rows.map(r => `<tr>
         <td>${r.p.name}</td>
@@ -1220,7 +1177,6 @@ function renderOverviewStandings() {
       </tr>`).join('')}</tbody>`;
     return;
   }
-
   const rows = state.alliances.map(t => {
     const { score, sp, matchesPlayed, label } = getAlliancePhaseScore(t.id, currentPhase);
     const phasesWon = [];
@@ -1230,20 +1186,15 @@ function renderOverviewStandings() {
     }
     return { alliance: t, score, sp, matchesPlayed, label, phasesWon };
   }).sort((a,b) => b.score - a.score);
-
   const colHeader = spPerMatch ? `SP/Match (Phase ${currentPhase})` : `SP (Phase ${currentPhase})`;
-  el.innerHTML = `
-    <thead><tr>
-      <th>Alliance</th><th>${colHeader}</th><th>Phases Won</th>
-    </tr></thead>
-    <tbody>
-    ${rows.map(r => `<tr>
+  elNode.innerHTML = `
+    <thead><tr><th>Alliance</th><th>${colHeader}</th><th>Phases Won</th></tr></thead>
+    <tbody>${rows.map(r => `<tr>
       <td><span class="alliance-badge" style="background:${r.alliance.color}"></span>${r.alliance.name}</td>
-      <td><strong>${r.label}</strong>${spPerMatch ? `<span style="color:var(--text-dim);font-size:11px;margin-left:6px;">(${r.sp} SP, ${r.matchesPlayed} M)</span>` : ''}</td>
-      <td>${r.phasesWon.length > 0 ? r.phasesWon.map(p=>`<span class="tag tag-phase">Phase ${p}</span>`).join(' ') : '<span style="color:var(--text-dim)">—</span>'}</td>
+      <td><strong>${r.label}</strong>${spPerMatch ? `<span style="color:var(--text-muted);font-size:11px;margin-left:6px;">(${r.sp} SP, ${r.matchesPlayed} M)</span>` : ''}</td>
+      <td>${r.phasesWon.length > 0 ? r.phasesWon.map(p=>`<span class="tag tag-phase">Phase ${p}</span>`).join(' ') : '<span style="color:var(--text-muted)">—</span>'}</td>
     </tr>`).join('')}
-    </tbody>
-  `;
+    </tbody>`;
 }
 
 function renderRecentMatches() {
@@ -1255,55 +1206,39 @@ function renderRecentMatches() {
   el('recent-matches').innerHTML = recent.map(m => {
     const p1 = state.players.find(p => p.id === m.p1);
     const p2 = state.players.find(p => p.id === m.p2);
-    const t1 = playerAlliance(p1);
-    const t2 = playerAlliance(p2);
-    return `<div style="padding:10px 0;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;font-size:13px;">
+    return `<div style="padding:10px 0;border-bottom:1px solid var(--border-dim);display:flex;align-items:center;gap:8px;font-size:13px;">
       <span class="tag tag-phase">R${m.round}</span>
       <span style="color:${m.p1result==='win'?'#6ABF6A':'#E06060'}">${p1?.name||'?'}</span>
-      <span style="color:var(--text-muted);font-size:11px;">${m.p1vp}VP</span>
-      <span style="color:var(--text-dim);font-family:'Cinzel',serif;">vs</span>
+      <span style="color:var(--text-dim);font-size:11px;">${m.p1vp}VP</span>
+      <span style="color:var(--text-muted);font-family:'Cinzel',serif;">vs</span>
       <span style="color:${m.p2result==='win'?'#6ABF6A':'#E06060'}">${p2?.name||'?'}</span>
-      <span style="color:var(--text-muted);font-size:11px;">${m.p2vp}VP</span>
+      <span style="color:var(--text-dim);font-size:11px;">${m.p2vp}VP</span>
     </div>`;
   }).join('');
 }
 
 // ─── Team Helpers ─────────────────────────────────────────────────────────────
-function getTeamMembers(teamId) {
-  return state.players.filter(p => p.teamId === teamId);
-}
-
+function getTeamMembers(teamId) { return state.players.filter(p => p.teamId === teamId); }
 function getTeamVP(teamId) {
-  const members = getTeamMembers(teamId);
-  const ids = new Set(members.map(p => p.id));
+  const ids = new Set(getTeamMembers(teamId).map(p => p.id));
   return state.matches.filter(m => !m.isBye).reduce((sum, m) => {
     if (ids.has(m.p1)) sum += m.p1vp;
     if (ids.has(m.p2)) sum += m.p2vp;
     return sum;
   }, 0);
 }
-
 function getTeamWL(teamId) {
-  const members = getTeamMembers(teamId);
-  const ids = new Set(members.map(p => p.id));
+  const ids = new Set(getTeamMembers(teamId).map(p => p.id));
   let wins = 0, losses = 0, draws = 0;
   state.matches.filter(m => !m.isBye).forEach(m => {
-    if (ids.has(m.p1)) {
-      if (m.p1result === 'win') wins++;
-      else if (m.p1result === 'loss') losses++;
-      else draws++;
-    }
-    if (ids.has(m.p2)) {
-      if (m.p2result === 'win') wins++;
-      else if (m.p2result === 'loss') losses++;
-      else draws++;
-    }
+    if (ids.has(m.p1)) { if (m.p1result==='win') wins++; else if (m.p1result==='loss') losses++; else draws++; }
+    if (ids.has(m.p2)) { if (m.p2result==='win') wins++; else if (m.p2result==='loss') losses++; else draws++; }
   });
   const gp = wins + losses + draws;
   return { wins, losses, draws, gp, winPct: gp > 0 ? wins / gp : 0 };
 }
 
-// ─── Team Modal Functions ──────────────────────────────────────────────────────
+// ─── Team Modals ──────────────────────────────────────────────────────────────
 function openAddTeamModal(presetAllianceId) {
   el('at-name').value = '';
   const allianceRow = el('at-alliance-row');
@@ -1318,19 +1253,13 @@ function openAddTeamModal(presetAllianceId) {
   }
   openModal('modal-add-team');
 }
-
 function addTeam() {
   const name = el('at-name').value.trim();
   if (!name) { toast('Team name required.'); return; }
-  const allianceId = (state.numAlliances > 0 && state.alliances.length > 0)
-    ? el('at-alliance').value : null;
+  const allianceId = (state.numAlliances > 0 && state.alliances.length > 0) ? el('at-alliance').value : null;
   state.teams.push({ id: 'tm' + Date.now(), name, allianceId, captainPlayerId: null });
-  save();
-  closeModal('modal-add-team');
-  renderAlliances();
-  toast(`${name} formed.`);
+  save(); closeModal('modal-add-team'); renderAlliances(); toast(`${name} formed.`);
 }
-
 function openEditTeam(teamId) {
   const team = state.teams.find(t => t.id === teamId);
   if (!team) return;
@@ -1347,12 +1276,10 @@ function openEditTeam(teamId) {
     ).join('');
   }
   const members = getTeamMembers(teamId);
-  const captainSel = el('et-captain');
-  captainSel.innerHTML = `<option value="">— No captain designated —</option>` +
+  el('et-captain').innerHTML = `<option value="">— No captain designated —</option>` +
     members.map(p => `<option value="${p.id}" ${p.id === team.captainPlayerId ? 'selected' : ''}>${p.name}</option>`).join('');
   openModal('modal-edit-team');
 }
-
 function saveEditTeam() {
   const id = el('et-id').value;
   const team = state.teams.find(t => t.id === id);
@@ -1360,12 +1287,8 @@ function saveEditTeam() {
   team.name = el('et-name').value.trim() || team.name;
   if (state.alliances.length > 0) team.allianceId = el('et-alliance').value;
   team.captainPlayerId = el('et-captain').value || null;
-  save();
-  closeModal('modal-edit-team');
-  renderAlliances();
-  toast('Team updated.');
+  save(); closeModal('modal-edit-team'); renderAlliances(); toast('Team updated.');
 }
-
 function removeTeam(teamId) {
   const team = state.teams.find(t => t.id === teamId);
   if (!team) return;
@@ -1373,35 +1296,21 @@ function removeTeam(teamId) {
   if (!confirm(`Remove team "${team.name}"? ${members.length > 0 ? `${members.length} player(s) will be unassigned from this team.` : ''}`)) return;
   members.forEach(p => { p.teamId = null; });
   state.teams = state.teams.filter(t => t.id !== teamId);
-  save();
-  renderAlliances();
-  toast(`${team.name} disbanded.`);
+  save(); renderAlliances(); toast(`${team.name} disbanded.`);
 }
 
-// ─── Alliances ────────────────────────────────────────────────────────────────────
+// ─── Alliances ────────────────────────────────────────────────────────────────
 function renderAlliances() {
   const grid = el('alliances-grid');
   const addTeamBtn = el('btn-add-team');
   const viewTitle = el('alliances-view-title');
-
-  // Show/hide Add Team button
   if (addTeamBtn) addTeamBtn.style.display = state.teamMode ? '' : 'none';
   if (viewTitle) viewTitle.textContent = state.teamMode ? 'Alliances, Teams & Rosters' : 'Alliances & Rosters';
-
   if (state.numAlliances === 0 || state.alliances.length === 0) {
-    if (state.teamMode) {
-      renderAlliancesTeamModeNoAlliances(grid);
-    } else {
-      renderAlliancesIndividual(grid);
-    }
+    state.teamMode ? renderAlliancesTeamModeNoAlliances(grid) : renderAlliancesIndividual(grid);
     return;
   }
-
-  if (state.teamMode) {
-    renderAlliancesTeamMode(grid);
-  } else {
-    renderAlliancesIndividual(grid);
-  }
+  state.teamMode ? renderAlliancesTeamMode(grid) : renderAlliancesIndividual(grid);
 }
 
 function renderAlliancesIndividual(grid) {
@@ -1415,11 +1324,13 @@ function renderAlliancesIndividual(grid) {
           const stats = getPlayerStats(p.id);
           return `<tr>
             <td>${p.name}</td>
-            <td style="color:var(--text-muted);font-style:italic;">${p.faction||'—'}</td>
+            <td style="color:var(--text-dim);font-style:italic;">${p.faction||'—'}</td>
             <td class="result-win td-center">${stats.wins}</td>
             <td class="result-loss td-center">${stats.losses}</td>
-            <td><button class="btn btn-sm btn-ghost" onclick="openEditPlayer('${p.id}')">✎</button>
-                <button class="btn btn-sm btn-danger" onclick="removePlayer('${p.id}')">✕</button></td>
+            <td>
+              <button class="btn btn-sm btn-ghost" onclick="openEditPlayer('${p.id}')">✎</button>
+              <button class="btn btn-sm btn-danger" onclick="removePlayer('${p.id}')">✕</button>
+            </td>
           </tr>`;
         }).join('') + `</tbody></table>`}
     </div>`;
@@ -1428,21 +1339,20 @@ function renderAlliancesIndividual(grid) {
   grid.innerHTML = `<div class="grid-${Math.min(state.alliances.length, 3)}">` +
     state.alliances.map(alliance => {
       const players = state.players.filter(p => p.allianceId === alliance.id);
-      const currentPhase = getCurrentPhase();
-      const { sp: allianceSP } = getAllianceSP(alliance.id, currentPhase);
+      const { sp } = getAllianceSP(alliance.id, getCurrentPhase());
       return `<div class="card">
         <div class="card-header">
           <div style="display:flex;align-items:center;gap:8px;">
             <span class="alliance-badge" style="background:${alliance.color};width:14px;height:14px;"></span>
             <span class="card-title">${alliance.name}</span>
           </div>
-          <span class="stat-pill pill-gold">${allianceSP} SP</span>
+          <span class="stat-pill pill-gold">${sp} SP</span>
         </div>
         <div class="txt-dim-sm" style="margin-bottom:8px;font-family:'Cinzel',serif;letter-spacing:0.05em;">ROSTER — ${players.length} player${players.length!==1?'s':''}</div>
-        ${players.length === 0 ? '<div style="color:var(--text-dim);font-style:italic;font-size:13px;">No players assigned</div>' :
+        ${players.length === 0 ? '<div style="color:var(--text-muted);font-style:italic;font-size:13px;">No players assigned</div>' :
           players.map(p => {
             const stats = getPlayerStats(p.id);
-            return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">
+            return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border-dim);">
               <div>
                 <div style="font-size:14px;">${p.name}</div>
                 <div class="txt-muted-sm" style="font-style:italic;">${p.faction||''}</div>
@@ -1454,29 +1364,24 @@ function renderAlliancesIndividual(grid) {
                 <button class="btn btn-sm btn-danger" onclick="removePlayer('${p.id}')">✕</button>
               </div>
             </div>`;
-          }).join('')
-        }
+          }).join('')}
       </div>`;
     }).join('') + '</div>';
 }
 
 function renderAlliancesTeamModeNoAlliances(grid) {
-  // Team mode, no alliances — show teams directly
   const teams = state.teams;
   if (teams.length === 0) {
     grid.innerHTML = `<div class="empty-state">No teams yet. Click "+ Add Team" to create your first team.</div>`;
     return;
   }
-  grid.innerHTML = `<div class="grid-${Math.min(teams.length, 3)}">` +
-    teams.map(team => teamCard(team)).join('') + '</div>';
+  grid.innerHTML = `<div class="grid-${Math.min(teams.length, 3)}">` + teams.map(team => teamCard(team)).join('') + '</div>';
 }
 
 function renderAlliancesTeamMode(grid) {
-  // Team mode with alliances — alliance cards containing team cards
   grid.innerHTML = state.alliances.map(alliance => {
     const allianceTeams = state.teams.filter(t => t.allianceId === alliance.id);
-    const currentPhase = getCurrentPhase();
-    const { sp: allianceSP } = getAllianceSP(alliance.id, currentPhase);
+    const { sp } = getAllianceSP(alliance.id, getCurrentPhase());
     return `<div class="card" style="margin-bottom:16px;">
       <div class="card-header">
         <div style="display:flex;align-items:center;gap:8px;">
@@ -1484,15 +1389,13 @@ function renderAlliancesTeamMode(grid) {
           <span class="card-title">${alliance.name}</span>
         </div>
         <div style="display:flex;align-items:center;gap:8px;">
-          <span class="stat-pill pill-gold">${allianceSP} SP</span>
+          <span class="stat-pill pill-gold">${sp} SP</span>
           <button class="btn btn-sm btn-ghost" onclick="openAddTeamModal('${alliance.id}')">+ Team</button>
         </div>
       </div>
       ${allianceTeams.length === 0
         ? '<div class="empty-state" style="padding:16px;">No teams in this alliance yet.</div>'
-        : `<div class="grid-${Math.min(allianceTeams.length, 2)}" style="gap:12px;">
-            ${allianceTeams.map(team => teamCard(team)).join('')}
-           </div>`}
+        : `<div class="grid-${Math.min(allianceTeams.length, 2)}" style="gap:12px;">${allianceTeams.map(team => teamCard(team)).join('')}</div>`}
     </div>`;
   }).join('');
 }
@@ -1516,13 +1419,13 @@ function teamCard(team) {
       ${twl.wins}W–${twl.losses}L &nbsp;·&nbsp; ${members.length} player${members.length!==1?'s':''}
     </div>
     ${members.length === 0
-      ? '<div style="color:var(--text-dim);font-style:italic;font-size:13px;">No players assigned</div>'
+      ? '<div style="color:var(--text-muted);font-style:italic;font-size:13px;">No players assigned</div>'
       : members.map(p => {
           const stats = getPlayerStats(p.id);
-          const isCaptain = p.id === team.captainPlayerId;
-          return `<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);">
+          const isCap = p.id === team.captainPlayerId;
+          return `<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border-dim);">
             <div>
-              <span style="font-size:14px;">${isCaptain ? '⚑ ' : ''}${p.name}</span>
+              <span style="font-size:14px;">${isCap ? '⚑ ' : ''}${p.name}</span>
               ${p.faction ? `<span class="txt-muted-sm" style="margin-left:6px;font-style:italic;">${p.faction}</span>` : ''}
             </div>
             <div style="display:flex;align-items:center;gap:6px;">
@@ -1545,22 +1448,19 @@ function rebuildSelect(id, options, currentVal) {
 }
 
 function renderMatches() {
-  // Populate filter selects
-  const curRound = el('filter-round').value;
-  const curPhase = el('filter-phase').value;
+  const curRound  = el('filter-round').value;
+  const curPhase  = el('filter-phase').value;
   const curPlayer = el('filter-player').value;
   const rounds = [...new Set(state.matches.map(m => m.round))].sort((a,b)=>a-b);
   const phases = [...new Set(state.matches.map(m => m.phase))].sort((a,b)=>a-b);
-  rebuildSelect('filter-round', [['','All Rounds'], ...rounds.map(r=>[r,`Round ${r}`])], curRound);
-  rebuildSelect('filter-phase', [['','All Phases'], ...phases.map(p=>[p,`Phase ${p}`])], curPhase);
+  rebuildSelect('filter-round',  [['','All Rounds'],  ...rounds.map(r=>[r,`Round ${r}`])],   curRound);
+  rebuildSelect('filter-phase',  [['','All Phases'],  ...phases.map(p=>[p,`Phase ${p}`])],   curPhase);
   rebuildSelect('filter-player', [['','All Players'], ...state.players.map(p=>[p.id,p.name])], curPlayer);
-
   let filtered = [...state.matches];
-  if (curRound) filtered = filtered.filter(m => m.round == curRound);
-  if (curPhase) filtered = filtered.filter(m => m.phase == curPhase);
+  if (curRound)  filtered = filtered.filter(m => m.round == curRound);
+  if (curPhase)  filtered = filtered.filter(m => m.phase == curPhase);
   if (curPlayer) filtered = filtered.filter(m => m.p1 === curPlayer || m.p2 === curPlayer);
   filtered.sort((a,b) => b.round - a.round || b.id - a.id);
-
   const tbody = el('matches-tbody');
   if (filtered.length === 0) {
     tbody.innerHTML = `<tr><td colspan="10" class="empty-state">No matches recorded yet.</td></tr>`;
@@ -1569,10 +1469,8 @@ function renderMatches() {
   tbody.innerHTML = filtered.map(m => {
     const p1 = state.players.find(p => p.id === m.p1);
     const p2 = m.p2 === '__BYE__' ? { name: 'BYE', allianceId: null } : state.players.find(p => p.id === m.p2);
-    const t1 = playerAlliance(p1);
-    const t2 = playerAlliance(p2);
-    const res1cls = m.isBye ? 'result-draw' : (m.p1result === 'win' ? 'result-win' : m.p1result === 'loss' ? 'result-loss' : 'result-draw');
-    const res2cls = m.isBye ? 'result-draw' : (m.p2result === 'win' ? 'result-win' : m.p2result === 'loss' ? 'result-loss' : 'result-draw');
+    const t1 = playerAlliance(p1), t2 = playerAlliance(p2);
+    const res1cls = m.isBye ? 'result-draw' : (m.p1result==='win' ? 'result-win' : m.p1result==='loss' ? 'result-loss' : 'result-draw');
     const resultLabel = m.isBye ? 'BYE' : `${m.p1result.toUpperCase()} / ${m.p2result.toUpperCase()}`;
     return `<tr>
       <td><span class="tag tag-phase">R${m.round}</span></td>
@@ -1593,8 +1491,6 @@ function renderMatches() {
 function renderStandings() {
   const spPerMatch = state.spMethod === 'per_match';
   const currentPhase = getCurrentPhase();
-
-  // ── Phase alliance standings ──────────────────────────────────────────────
   let phasesHtml = '';
   if (state.alliances.length > 0) {
     for (let p = 1; p <= state.numPhases; p++) {
@@ -1611,23 +1507,19 @@ function renderStandings() {
           ${winner ? `<span class="stat-pill pill-win">❖ ${winner.name}</span>`
             : phaseTied ? `<span class="txt-muted-sm">— Tied</span>`
             : p === currentPhase ? '<span class="stat-pill pill-gold">In Progress</span>'
-            : '<span style="color:var(--text-dim);font-size:12px;">Upcoming</span>'}
+            : '<span style="color:var(--text-muted);font-size:12px;">Upcoming</span>'}
         </div>
         <table>
           <thead><tr>
-            <th>Alliance</th>
-            <th class="td-right">SP</th>
-            <th class="td-right">Matches</th>
+            <th>Alliance</th><th class="td-right">SP</th><th class="td-right">Matches</th>
             ${spPerMatch ? '<th class="td-right">SP / Match</th>' : ''}
           </tr></thead>
-          <tbody>
-            ${rows.map(r => `<tr>
-              <td><span class="alliance-badge" style="background:${r.alliance.color}"></span>${r.alliance.name}</td>
-              <td class="td-right">${r.sp}</td>
-              <td class="td-right">${r.matchesPlayed}</td>
-              ${spPerMatch ? `<td class="td-right"><strong>${r.label}</strong></td>` : ''}
-            </tr>`).join('')}
-          </tbody>
+          <tbody>${rows.map(r => `<tr>
+            <td><span class="alliance-badge" style="background:${r.alliance.color}"></span>${r.alliance.name}</td>
+            <td class="td-right">${r.sp}</td>
+            <td class="td-right">${r.matchesPlayed}</td>
+            ${spPerMatch ? `<td class="td-right"><strong>${r.label}</strong></td>` : ''}
+          </tr>`).join('')}</tbody>
         </table>
         ${spPerMatch ? '<div class="txt-muted-sm" style="margin-top:8px;font-style:italic;">Phase winner determined by SP per match played.</div>' : ''}
       </div>`;
@@ -1636,7 +1528,6 @@ function renderStandings() {
   el('standings-phases').innerHTML = state.alliances.length > 0
     ? `<div class="grid-${Math.min(state.numPhases,3)}">${phasesHtml}</div>` : '';
 
-  // ── Team standings (team mode only) ──────────────────────────────────────
   const teamsContainer = el('standings-teams');
   if (state.teamMode && state.teams.length > 0) {
     teamsContainer.style.display = '';
@@ -1644,57 +1535,46 @@ function renderStandings() {
       const alliance = state.alliances.find(a => a.id === team.allianceId) ?? null;
       const captain = state.players.find(p => p.id === team.captainPlayerId) ?? null;
       const members = getTeamMembers(team.id);
-      const tvp = getTeamVP(team.id);
-      const twl = getTeamWL(team.id);
-      return { team, alliance, captain, members, tvp, twl };
+      return { team, alliance, captain, members, tvp: getTeamVP(team.id), twl: getTeamWL(team.id) };
     }).sort((a,b) => b.tvp - a.tvp || b.twl.winPct - a.twl.winPct);
-
     teamsContainer.innerHTML = `<div class="card">
       <div class="card-header"><span class="card-title">Team Standings</span></div>
       <table>
         <thead><tr>
-          <th>Team</th>
-          ${state.alliances.length > 0 ? '<th>Alliance</th>' : ''}
+          <th>Team</th>${state.alliances.length > 0 ? '<th>Alliance</th>' : ''}
           <th>Captain</th><th class="td-center">Players</th>
           <th class="td-right">Team VP</th>
           <th class="td-center">W</th><th class="td-center">L</th><th class="td-center">Win%</th>
         </tr></thead>
-        <tbody>
-          ${teamRows.map((r,i) => `<tr>
-            <td><strong>${r.team.name}</strong></td>
-            ${state.alliances.length > 0
-              ? `<td><span class="alliance-badge" style="background:${r.alliance?.color||'#888'}"></span>${r.alliance?.name||'—'}</td>`
-              : ''}
-            <td>${r.captain?.name || '<span style="color:var(--text-dim)">—</span>'}</td>
-            <td class="td-center">${r.members.length}</td>
-            <td class="td-right"><strong>${r.tvp}</strong></td>
-            <td class="td-center result-win">${r.twl.wins}</td>
-            <td class="td-center result-loss">${r.twl.losses}</td>
-            <td class="td-center">${(r.twl.winPct*100).toFixed(0)}%</td>
-          </tr>`).join('')}
-        </tbody>
+        <tbody>${teamRows.map(r => `<tr>
+          <td><strong>${r.team.name}</strong></td>
+          ${state.alliances.length > 0 ? `<td><span class="alliance-badge" style="background:${r.alliance?.color||'#888'}"></span>${r.alliance?.name||'—'}</td>` : ''}
+          <td>${r.captain?.name || '<span style="color:var(--text-muted)">—</span>'}</td>
+          <td class="td-center">${r.members.length}</td>
+          <td class="td-right"><strong>${r.tvp}</strong></td>
+          <td class="td-center result-win">${r.twl.wins}</td>
+          <td class="td-center result-loss">${r.twl.losses}</td>
+          <td class="td-center">${(r.twl.winPct*100).toFixed(0)}%</td>
+        </tr>`).join('')}</tbody>
       </table>
     </div>`;
   } else {
     teamsContainer.style.display = 'none';
   }
 
-  // ── Individual player standings ───────────────────────────────────────────
   const showTeamCol = state.teamMode && state.teams.length > 0;
   const showAllianceCol = state.alliances.length > 0;
   el('standings-th-alliance').style.display = showAllianceCol ? '' : 'none';
   el('standings-th-team').style.display = showTeamCol ? '' : 'none';
-
   const playerRows = state.players.map(p => ({
     p, alliance: playerAlliance(p),
     team: state.teams.find(t => t.id === p.teamId) ?? null,
     ...getEnrichedStats(p.id)
   })).sort((a,b) => b.wins - a.wins || b.ogw - a.ogw);
-
   el('standings-tbody').innerHTML = playerRows.map(({p, wins, losses, winPct, vpFor, vpAgainst, ogw, winPath, alliance, team}) => `<tr>
     <td>${p.name}</td>
     ${showAllianceCol ? `<td><span class="alliance-badge" style="background:${alliance?.color||'#888'}"></span>${alliance?.name||'—'}</td>` : ''}
-    ${showTeamCol ? `<td>${team?.name||'<span style="color:var(--text-dim)">—</span>'}</td>` : ''}
+    ${showTeamCol ? `<td>${team?.name||'<span style="color:var(--text-muted)">—</span>'}</td>` : ''}
     <td class="result-win td-center">${wins}</td>
     <td class="result-loss td-center">${losses}</td>
     <td class="td-center">${(winPct*100).toFixed(0)}%</td>
@@ -1708,7 +1588,6 @@ function renderStandings() {
 // ─── Pairings ─────────────────────────────────────────────────────────────────
 function generatePairings() {
   const nextRound = state.currentRound;
-
   if (state.teamMode) {
     if (state.teams.length < 2) { toast('Need at least 2 teams to generate pairings.'); return; }
     const { pairs, byes } = generateTeamPairings(nextRound);
@@ -1716,65 +1595,43 @@ function generatePairings() {
     state.pendingByes = byes.map(t => t.id);
   } else {
     if (state.players.length < 2) { toast('Need at least 2 players to generate pairings.'); return; }
-    const allowIntraAlliance = state.numAlliances === 0 ||
-      el('pairing-allow-intraalliance')?.checked !== false;
+    const allowIntra = state.numAlliances === 0 || el('pairing-allow-intraalliance')?.checked !== false;
     const { pairs, byes } = state.pairing === 'winpath'
-      ? generateWinPathPairings(nextRound, allowIntraAlliance)
-      : generateRoundRobinPairings(nextRound, allowIntraAlliance);
+      ? generateWinPathPairings(nextRound, allowIntra)
+      : generateRoundRobinPairings(nextRound, allowIntra);
     state.pendingPairings = pairs.map(([a, b]) => ({ p1: a.id, p2: b.id }));
     state.pendingByes = byes.map(p => p.id);
   }
-
-  save();
-  renderPairings();
+  save(); renderPairings();
 }
 
 function generateTeamPairings(round) {
   const teams = [...state.teams];
-  const pairs = [];
-  const byes = [];
-
-  // Build set of already-paired team matchups
+  const pairs = [], byes = [];
   const played = new Set();
   state.teamPairings.forEach(tp => played.add([tp.team1Id, tp.team2Id].sort().join('|')));
   const hasPlayed = (a, b) => played.has([a.id, b.id].sort().join('|'));
-
-  // Sort teams by VP desc, then W/L ratio desc (higher VP = harder matchup)
-  const enriched = teams.map(t => ({
-    team: t,
-    vp: getTeamVP(t.id),
-    wl: getTeamWL(t.id),
-  }));
-
+  const enriched = teams.map(t => ({ team: t, vp: getTeamVP(t.id), wl: getTeamWL(t.id) }));
   if (state.pairing === 'winpath') {
-    // Group by VP bracket, pair within brackets, tiebreak by W/L ratio
     enriched.sort((a, b) => b.vp - a.vp || b.wl.winPct - a.wl.winPct);
     const remaining = [...enriched];
     let dropDown = null;
     while (remaining.length >= 2) {
-      const a = dropDown || remaining.shift();
-      dropDown = null;
+      const a = dropDown || remaining.shift(); dropDown = null;
       let bestIdx = 0;
-      // Prefer unplayed opponent
-      for (let i = 0; i < remaining.length; i++) {
-        if (!hasPlayed(a.team, remaining[i].team)) { bestIdx = i; break; }
-      }
+      for (let i = 0; i < remaining.length; i++) { if (!hasPlayed(a.team, remaining[i].team)) { bestIdx = i; break; } }
       const b = remaining.splice(bestIdx, 1)[0];
       pairs.push([a.team, b.team]);
     }
     if (remaining.length === 1) byes.push(remaining[0].team);
   } else {
-    // Round Robin: priority to unpaired opponents, then VP order
     enriched.sort((a, b) => b.vp - a.vp || b.wl.winPct - a.wl.winPct);
     const remaining = [...enriched];
     while (remaining.length >= 2) {
       const a = remaining.shift();
       let bestIdx = -1;
-      // First pass: find first unplayed opponent
       if (!state.allowRematches) {
-        for (let i = 0; i < remaining.length; i++) {
-          if (!hasPlayed(a.team, remaining[i].team)) { bestIdx = i; break; }
-        }
+        for (let i = 0; i < remaining.length; i++) { if (!hasPlayed(a.team, remaining[i].team)) { bestIdx = i; break; } }
       }
       if (bestIdx === -1) bestIdx = 0;
       const b = remaining.splice(bestIdx, 1)[0];
@@ -1782,31 +1639,16 @@ function generateTeamPairings(round) {
     }
     if (remaining.length === 1) byes.push(remaining[0].team);
   }
-
   return { pairs, byes };
 }
 
 function generateRoundRobinPairings(round, allowIntraAlliance = true) {
   const players = [...state.players];
-  const n = players.length;
-  if (n === 0) return { pairs: [], byes: [] };
-
-  // Build set of played matchups
+  if (players.length === 0) return { pairs: [], byes: [] };
   const played = new Set();
   state.matches.forEach(m => played.add([m.p1,m.p2].sort().join('|')));
-
   const hasPlayed = (a, b) => played.has([a.id,b.id].sort().join('|'));
-
-  // Score-based sort: first prioritize players who have fewer games played (more unplayed opponents)
-  // Then use Win Path as secondary sort within pairing groups
-  // Use a greedy matching algorithm: pair best-available by Win Path,
-  // strongly preferring unplayed opponents
-
   const remaining = [...players];
-  const pairs = [];
-  const byes = [];
-
-  // Sort players by winPath key as primary seeding (mirroring Win Path logic)
   remaining.sort((a, b) => {
     const sa = getEnrichedStats(a.id), sb = getEnrichedStats(b.id);
     if (sb.wins !== sa.wins) return sb.wins - sa.wins;
@@ -1814,38 +1656,29 @@ function generateRoundRobinPairings(round, allowIntraAlliance = true) {
     if (sa.winPathKey !== sb.winPathKey) return sa.winPathKey.localeCompare(sb.winPathKey);
     return sb.ogw - sa.ogw;
   });
-
+  const pairs = [], byes = [];
   while (remaining.length >= 2) {
     const a = remaining.shift();
-    // Find best opponent: prefer unplayed + cross-alliance, then relax constraints
     const sameAlliance = (x, y) => !allowIntraAlliance && x.allianceId && x.allianceId === y.allianceId;
     let bestIdx = -1;
-    // First pass: unplayed AND cross-alliance
     for (let i = 0; i < remaining.length; i++) {
-      if (!sameAlliance(a, remaining[i]) && (state.allowRematches || !hasPlayed(a, remaining[i]))) {
-        bestIdx = i; break;
-      }
+      if (!sameAlliance(a, remaining[i]) && (state.allowRematches || !hasPlayed(a, remaining[i]))) { bestIdx = i; break; }
     }
-    // Second pass: if all cross-alliance options are exhausted, allow intra-alliance
     if (bestIdx === -1 && !allowIntraAlliance) {
       for (let i = 0; i < remaining.length; i++) {
         if (state.allowRematches || !hasPlayed(a, remaining[i])) { bestIdx = i; break; }
       }
     }
-    // Final fallback: take first available
     if (bestIdx === -1) bestIdx = 0;
     const b = remaining.splice(bestIdx, 1)[0];
     pairs.push([a, b]);
   }
   if (remaining.length === 1) byes.push(remaining[0]);
-
   return { pairs, byes };
 }
 
 function generateWinPathPairings(round, allowIntraAlliance = true) {
   const players = [...state.players];
-
-  // Group by win-loss record (wins desc, losses asc)
   const groups = {};
   players.forEach(p => {
     const stats = getPlayerStats(p.id);
@@ -1853,61 +1686,39 @@ function generateWinPathPairings(round, allowIntraAlliance = true) {
     if (!groups[key]) groups[key] = [];
     groups[key].push(p);
   });
-
-  // Sort groups best to worst
   const sortedGroupKeys = Object.keys(groups).sort((a, b) => {
-    const [aw, al] = a.split('-').map(Number);
-    const [bw, bl] = b.split('-').map(Number);
-    if (bw !== aw) return bw - aw;
-    return al - bl;
+    const [aw, al] = a.split('-').map(Number), [bw, bl] = b.split('-').map(Number);
+    if (bw !== aw) return bw - aw; return al - bl;
   });
-
-  const pairs = [];
-  const byes = [];
+  const pairs = [], byes = [];
   let dropDown = null;
-
   sortedGroupKeys.forEach(key => {
     let group = [...groups[key]];
     if (dropDown) { group.unshift(dropDown); dropDown = null; }
-
-    // Within group, sort by win-path sequence then OGW
     group.sort((a, b) => {
-      const pathA = getWinPathKey(a.id);
-      const pathB = getWinPathKey(b.id);
+      const pathA = getWinPathKey(a.id), pathB = getWinPathKey(b.id);
       if (pathA !== pathB) return pathA.localeCompare(pathB);
       return getOGW(b.id) - getOGW(a.id);
     });
-
-    // Sub-group by win-path
     const pathGroups = {};
     group.forEach(p => {
       const pk = getWinPathKey(p.id);
       if (!pathGroups[pk]) pathGroups[pk] = [];
       pathGroups[pk].push(p);
     });
-
     Object.values(pathGroups).forEach(pg => {
       let sorted = pg.sort((a,b) => getOGW(b.id) - getOGW(a.id));
-      if (sorted.length % 2 !== 0) {
-        // lowest OGW drops down
-        const lowest = sorted.pop();
-        dropDown = lowest;
-      }
+      if (sorted.length % 2 !== 0) { dropDown = sorted.pop(); }
       for (let i = 0; i < sorted.length; i += 2) {
         if (sorted[i+1]) {
           const a = sorted[i], b = sorted[i+1];
           if (!allowIntraAlliance && a.allianceId && a.allianceId === b.allianceId) {
-            // Intra-alliance pair blocked — treat both as drop-downs
-            // Push lower-OGW one as dropDown for next group, other stays unpaired this pass
             if (!dropDown) dropDown = b; else byes.push(b);
-          } else {
-            pairs.push([a, b]);
-          }
+          } else { pairs.push([a, b]); }
         }
       }
     });
   });
-
   if (dropDown) byes.push(dropDown);
   return { pairs, byes };
 }
@@ -1915,35 +1726,24 @@ function generateWinPathPairings(round, allowIntraAlliance = true) {
 function renderPairings() {
   const nextRound = state.currentRound;
   el('next-round-num').textContent = nextRound;
-
-  // Show/hide intra-alliance checkbox (hidden in individual tournaments and team mode)
   const intraRow = el('pairings-intra-alliance-row');
   if (intraRow) intraRow.style.display = (state.numAlliances === 0 || state.teamMode) ? 'none' : '';
-
   el('pairings-method-info').textContent = state.teamMode
-    ? `Team pairing: teams are sorted by VP total. ${state.pairing === 'winpath' ? 'Teams are grouped by VP bracket and paired within brackets.' : 'Priority given to teams that have not yet faced each other.'} Higher VP earns the harder matchup.`
+    ? `Team pairing: teams sorted by VP. ${state.pairing === 'winpath' ? 'Teams grouped by VP bracket and paired within brackets.' : 'Priority given to teams that have not yet faced each other.'}`
     : state.pairing === 'winpath'
-      ? `Win Path pairing: players are grouped by record, then win/loss sequence, then tiebroken by Opponent Game Win%. Players dropping from odd groups fall to the next bracket.`
-      : `Round Robin pairing: priority is given to opponents each player has not yet faced. Within that, players are seeded by Win Path (record → path sequence → OGW%) for closest-skill matchups.`;
-
+      ? `Win Path pairing: players grouped by record, then win/loss sequence, then tiebroken by Opponent Game Win%.`
+      : `Round Robin pairing: priority given to opponents each player has not yet faced, seeded by Win Path.`;
   const container = el('pairings-container');
   const byesEl = el('pairings-byes');
-
-  if (state.teamMode) {
-    renderTeamPairingCards(container, byesEl);
-  } else {
-    renderIndividualPairingCards(container, byesEl);
-  }
+  state.teamMode ? renderTeamPairingCards(container, byesEl) : renderIndividualPairingCards(container, byesEl);
 }
 
 function renderTeamPairingCards(container, byesEl) {
   const pending = state.pendingTeamPairings || [];
   if (pending.length === 0) {
     container.innerHTML = '<div class="empty-state">Click "Generate Next Round" to create team pairings.</div>';
-    byesEl.innerHTML = '';
-    return;
+    byesEl.innerHTML = ''; return;
   }
-
   container.innerHTML = pending.map((tp, i) => {
     const team1 = state.teams.find(t => t.id === tp.team1Id);
     const team2 = state.teams.find(t => t.id === tp.team2Id);
@@ -1951,24 +1751,20 @@ function renderTeamPairingCards(container, byesEl) {
     const a2 = team2 ? state.alliances.find(a => a.id === team2.allianceId) : null;
     const members1 = team1 ? getTeamMembers(team1.id) : [];
     const members2 = team2 ? getTeamMembers(team2.id) : [];
-    const tvp1 = team1 ? getTeamVP(team1.id) : 0;
-    const tvp2 = team2 ? getTeamVP(team2.id) : 0;
-    const twl1 = team1 ? getTeamWL(team1.id) : { wins:0, losses:0 };
-    const twl2 = team2 ? getTeamWL(team2.id) : { wins:0, losses:0 };
+    const tvp1 = team1 ? getTeamVP(team1.id) : 0, tvp2 = team2 ? getTeamVP(team2.id) : 0;
+    const twl1 = team1 ? getTeamWL(team1.id) : {wins:0,losses:0};
+    const twl2 = team2 ? getTeamWL(team2.id) : {wins:0,losses:0};
     const cap1 = team1 ? state.players.find(p => p.id === team1.captainPlayerId) : null;
     const cap2 = team2 ? state.players.find(p => p.id === team2.captainPlayerId) : null;
-
     const memberList = (members, capId) => members.length === 0
-      ? '<div style="color:var(--text-dim);font-style:italic;font-size:13px;">No players</div>'
+      ? '<div style="color:var(--text-muted);font-style:italic;font-size:13px;">No players</div>'
       : members.map(p => {
           const s = getPlayerStats(p.id);
-          const ogw = (getOGW(p.id)*100).toFixed(1);
-          return `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);font-size:13px;">
+          return `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border-dim);font-size:13px;">
             <span>${p.id === capId ? '⚑ ' : ''}${p.name}</span>
-            <span class="txt-muted-sm">${s.wins}W–${s.losses}L · OGW ${ogw}%</span>
+            <span class="txt-muted-sm">${s.wins}W–${s.losses}L · OGW ${(getOGW(p.id)*100).toFixed(1)}%</span>
           </div>`;
         }).join('');
-
     return `<div class="card" style="margin-bottom:12px;">
       <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:16px;align-items:start;">
         <div>
@@ -1991,15 +1787,12 @@ function renderTeamPairingCards(container, byesEl) {
       </div>
     </div>`;
   }).join('');
-
-  // Bye teams
-  if (state.pendingByes && state.pendingByes.length > 0) {
+  if (state.pendingByes?.length > 0) {
     const byeTeams = state.pendingByes.map(id => state.teams.find(t => t.id === id)).filter(Boolean);
     if (byeTeams.length > 0) {
       byesEl.innerHTML = `<div class="alert alert-warn" style="margin-top:12px;">
         <strong>Bye team${byeTeams.length > 1 ? 's' : ''}:</strong> ${byeTeams.map(t => t.name).join(', ')} — no opponent this round.
-      </div>`;
-      return;
+      </div>`; return;
     }
   }
   byesEl.innerHTML = '';
@@ -2008,21 +1801,18 @@ function renderTeamPairingCards(container, byesEl) {
 function renderIndividualPairingCards(container, byesEl) {
   if (!state.pendingPairings || state.pendingPairings.length === 0) {
     container.innerHTML = '<div class="empty-state">Click "Generate Next Round" to create pairings.</div>';
-    byesEl.innerHTML = '';
-    return;
+    byesEl.innerHTML = ''; return;
   }
-
   container.innerHTML = state.pendingPairings.map((pair, i) => {
     const p1 = state.players.find(p => p.id === pair.p1);
     const p2 = state.players.find(p => p.id === pair.p2);
-    const t1 = playerAlliance(p1);
-    const t2 = playerAlliance(p2);
+    const t1 = playerAlliance(p1), t2 = playerAlliance(p2);
     const stats1 = p1 ? getPlayerStats(p1.id) : null;
     const stats2 = p2 ? getPlayerStats(p2.id) : null;
     const ogw1 = p1 ? (getOGW(p1.id)*100).toFixed(1) : 0;
     const ogw2 = p2 ? (getOGW(p2.id)*100).toFixed(1) : 0;
     return `<div class="pairing-card">
-      <div style="font-family:'Cinzel',serif;font-size:12px;color:var(--text-dim);min-width:24px;">${i+1}.</div>
+      <div style="font-family:'Cinzel',serif;font-size:12px;color:var(--text-muted);min-width:24px;">${i+1}.</div>
       <div class="pairing-player">
         <div><span class="alliance-badge" style="background:${t1?.color||'#888'}"></span><strong>${p1?.name||'?'}</strong></div>
         <div class="pairing-path">${t1?.name||''} · ${stats1?.wins||0}W-${stats1?.losses||0}L · OGW ${ogw1}% · Path: ${stats1?.winPath.join('')||'—'}</div>
@@ -2034,65 +1824,49 @@ function renderIndividualPairingCards(container, byesEl) {
       </div>
     </div>`;
   }).join('');
-
-  if (state.pendingByes && state.pendingByes.length > 0) {
+  if (state.pendingByes?.length > 0) {
     const byePlayers = state.pendingByes.map(id => state.players.find(p => p.id === id)).filter(Boolean);
     byesEl.innerHTML = `<div class="alert alert-warn" style="margin-top:12px;">
       <strong>Bye${byePlayers.length > 1 ? 's' : ''}:</strong>
-      ${byePlayers.map(p => `
-        <span style="margin-right:12px;">${p.name}
-          <button class="btn btn-sm btn-ghost" style="margin-left:8px;font-size:11px;" onclick="openByeSPModal('${p.id}')">Record SP</button>
-        </span>`).join('')}
+      ${byePlayers.map(p => `<span style="margin-right:12px;">${p.name}
+        <button class="btn btn-sm btn-ghost" style="margin-left:8px;font-size:11px;" onclick="openByeSPModal('${p.id}')">Record SP</button>
+      </span>`).join('')}
       <div class="txt-muted-sm" style="margin-top:6px;">Bye players earn no automatic SP, but you may optionally record SP for them.</div>
     </div>`;
-  } else {
-    byesEl.innerHTML = '';
-  }
+  } else { byesEl.innerHTML = ''; }
 }
 
 function lockPairings() {
-  const hasIndividual = state.pendingPairings && state.pendingPairings.length > 0;
-  const hasTeam = state.pendingTeamPairings && state.pendingTeamPairings.length > 0;
-  if (!hasIndividual && !hasTeam) {
-    toast('Generate pairings first.');
-    return;
-  }
-  if (hasTeam) {
-    state.teamPairings = [...(state.teamPairings || []), ...state.pendingTeamPairings];
-    state.pendingTeamPairings = [];
-  }
-  if (hasIndividual) {
-    state.pendingPairings = [];
-  }
+  const hasInd  = state.pendingPairings?.length > 0;
+  const hasTeam = state.pendingTeamPairings?.length > 0;
+  if (!hasInd && !hasTeam) { toast('Generate pairings first.'); return; }
+  if (hasTeam) { state.teamPairings = [...(state.teamPairings||[]), ...state.pendingTeamPairings]; state.pendingTeamPairings = []; }
+  if (hasInd) state.pendingPairings = [];
   state.pendingByes = [];
   state.currentRound++;
-  save();
-  renderAll();
+  save(); renderAll();
   toast(`Round ${state.currentRound - 1} locked. Now on Round ${state.currentRound}.`);
 }
 
 // ─── Settings ─────────────────────────────────────────────────────────────────
 function renderSettings() {
-  el('settings-name').value = state.name;
+  el('settings-name').value    = state.name;
   el('settings-pairing').value = state.pairing;
   el('settings-rematch').value = state.allowRematches ? '1' : '0';
-  el('settings-rpp').value = state.roundsPerPhase || '';
-  el('settings-phases').value = state.numPhases || 3;
+  el('settings-rpp').value     = state.roundsPerPhase || '';
+  el('settings-phases').value  = state.numPhases || 3;
   el('settings-spmethod').value = state.spMethod || 'raw';
   el('settings-spmethod-row').style.display = state.numAlliances === 0 ? 'none' : '';
   el('settings-teammode').value = state.teamMode ? '1' : '0';
-  updateSpMethodHint();
-  updateTeamModeHint();
+  updateSpMethodHint(); updateTeamModeHint();
 }
-
 function updateSpMethodHint() {
   const hint = el('settings-spmethod-hint');
   if (!hint) return;
   hint.textContent = state.spMethod === 'per_match'
-    ? 'Phase winner = alliance with highest (total SP ÷ matches played). Levels the field when alliances have different player counts.'
+    ? 'Phase winner = alliance with highest (total SP ÷ matches played).'
     : 'Phase winner = alliance with the highest raw SP total.';
 }
-
 function updateTeamModeHint() {
   const hint = el('settings-teammode-hint');
   if (!hint) return;
@@ -2100,7 +1874,6 @@ function updateTeamModeHint() {
     ? 'Teams are paired each round. Captains assign individual match-ups offline.'
     : 'Players are paired directly against each other each round.';
 }
-
 function updateSettings() {
   state.name = el('settings-name').value;
   state.pairing = el('settings-pairing').value;
@@ -2112,19 +1885,15 @@ function updateSettings() {
   state.spMethod = el('settings-spmethod').value || 'raw';
   const newTeamMode = el('settings-teammode').value === '1';
   if (newTeamMode !== state.teamMode && state.matches.length > 0) {
-    if (!confirm('Changing the play format mid-crusade will affect pairing logic. Recorded matches will not be affected. Continue?')) {
-      el('settings-teammode').value = state.teamMode ? '1' : '0';
-      return;
+    if (!confirm('Changing the play format mid-crusade will affect pairing logic. Continue?')) {
+      el('settings-teammode').value = state.teamMode ? '1' : '0'; return;
     }
   }
   state.teamMode = newTeamMode;
-  updateSpMethodHint();
-  updateTeamModeHint();
+  updateSpMethodHint(); updateTeamModeHint();
   save();
   el('header-title').textContent = state.name;
-  renderPhaseBar();
-  renderOverviewStandings();
-  renderStandings();
+  renderPhaseBar(); renderOverviewStandings(); renderStandings();
 }
 
 // ─── Modal: Add Player ────────────────────────────────────────────────────────
@@ -2132,84 +1901,54 @@ function openAddPlayerModal() {
   const sel = el('ap-alliance');
   const allianceRow = el('ap-alliance-row');
   const teamRow = el('ap-team-row');
-  if (state.numAlliances === 0) {
-    allianceRow.style.display = 'none';
-  } else {
-    allianceRow.style.display = '';
-    sel.innerHTML = state.alliances.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
-  }
-  // Show team select only in team mode
-  if (state.teamMode) {
-    teamRow.style.display = '';
-    updateApTeamSelect();
-  } else {
-    teamRow.style.display = 'none';
-  }
-  el('ap-name').value = '';
-  el('ap-faction').value = '';
+  if (state.numAlliances === 0) { allianceRow.style.display = 'none'; }
+  else { allianceRow.style.display = ''; sel.innerHTML = state.alliances.map(a => `<option value="${a.id}">${a.name}</option>`).join(''); }
+  if (state.teamMode) { teamRow.style.display = ''; updateApTeamSelect(); }
+  else { teamRow.style.display = 'none'; }
+  el('ap-name').value = ''; el('ap-faction').value = '';
   openModal('modal-add-player');
 }
-
 function updateApTeamSelect() {
   const allianceId = state.numAlliances > 0 ? el('ap-alliance').value : null;
   const teams = state.teams.filter(t => allianceId ? t.allianceId === allianceId : true);
   el('ap-team').innerHTML = `<option value="">— No team —</option>` +
     teams.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
 }
-
 function addPlayer() {
   const name = el('ap-name').value.trim();
   if (!name) { toast('Player name required.'); return; }
   const faction = el('ap-faction').value.trim();
   const allianceId = state.numAlliances === 0 ? null : (el('ap-alliance').value || null);
   const teamId = (state.teamMode && el('ap-team').value) ? el('ap-team').value : null;
-
-  // Validate alliance/team consistency
   if (teamId) {
     const team = state.teams.find(t => t.id === teamId);
-    if (team && allianceId && team.allianceId !== allianceId) {
-      toast('Player alliance must match their team\'s alliance.'); return;
-    }
+    if (team && allianceId && team.allianceId !== allianceId) { toast('Player alliance must match their team\'s alliance.'); return; }
   }
-
   state.players.push({ id: 'p' + Date.now(), name, faction, allianceId, teamId });
-  save();
-  closeModal('modal-add-player');
-  renderAll();
-  toast(`${name} enlisted.`);
+  save(); closeModal('modal-add-player'); renderAll(); toast(`${name} enlisted.`);
 }
 
 // ─── Modal: Edit Player ───────────────────────────────────────────────────────
 function openEditPlayer(playerId) {
   const p = state.players.find(pl => pl.id === playerId);
   if (!p) return;
-  el('ep-id').value = p.id;
-  el('ep-name').value = p.name;
-  el('ep-faction').value = p.faction || '';
-  const allianceRow = el('ep-alliance-row');
-  const allianceSel = el('ep-alliance');
-  const teamRow = el('ep-team-row');
-  const teamSel = el('ep-team');
-  if (state.numAlliances === 0) {
-    allianceRow.style.display = 'none';
-  } else {
+  el('ep-id').value = p.id; el('ep-name').value = p.name; el('ep-faction').value = p.faction || '';
+  const allianceRow = el('ep-alliance-row'), allianceSel = el('ep-alliance');
+  const teamRow = el('ep-team-row'), teamSel = el('ep-team');
+  if (state.numAlliances === 0) { allianceRow.style.display = 'none'; }
+  else {
     allianceRow.style.display = '';
     allianceSel.innerHTML = state.alliances.map(a =>
-      `<option value="${a.id}" ${a.id === p.allianceId ? 'selected' : ''}>${a.name}</option>`
-    ).join('');
+      `<option value="${a.id}" ${a.id === p.allianceId ? 'selected' : ''}>${a.name}</option>`).join('');
   }
   if (state.teamMode) {
     teamRow.style.display = '';
-    const allianceId = p.allianceId;
-    const teams = state.teams.filter(t => allianceId ? t.allianceId === allianceId : true);
+    const teams = state.teams.filter(t => p.allianceId ? t.allianceId === p.allianceId : true);
     teamSel.innerHTML = `<option value="">— No team —</option>` +
       teams.map(t => `<option value="${t.id}" ${t.id === p.teamId ? 'selected' : ''}>${t.name}</option>`).join('');
-  } else {
-    teamRow.style.display = 'none';
-  }
+  } else { teamRow.style.display = 'none'; }
   openModal('modal-edit-player');
 }
-
 function saveEditPlayer() {
   const id = el('ep-id').value;
   const p = state.players.find(pl => pl.id === id);
@@ -2221,41 +1960,30 @@ function saveEditPlayer() {
     const newTeamId = el('ep-team').value || null;
     if (newTeamId) {
       const team = state.teams.find(t => t.id === newTeamId);
-      if (team && p.allianceId && team.allianceId !== p.allianceId) {
-        toast('Player alliance must match their team\'s alliance.'); return;
-      }
+      if (team && p.allianceId && team.allianceId !== p.allianceId) { toast('Player alliance must match their team\'s alliance.'); return; }
     }
     p.teamId = newTeamId;
   }
-  save();
-  closeModal('modal-edit-player');
-  renderAll();
-  toast('Player updated.');
+  save(); closeModal('modal-edit-player'); renderAll(); toast('Player updated.');
 }
-
 function removePlayer(playerId) {
   const p = state.players.find(pl => pl.id === playerId);
   if (!p) return;
   if (!confirm(`Remove ${p.name} from the Crusade? Their match records will remain.`)) return;
   state.players = state.players.filter(pl => pl.id !== playerId);
-  save();
-  renderAll();
-  toast(`${p.name} removed.`);
+  save(); renderAll(); toast(`${p.name} removed.`);
 }
 
 // ─── Modal: Record Match ──────────────────────────────────────────────────────
 function openRecordMatchModal() {
   const players = state.players;
   if (players.length < 2) { toast('Need at least 2 players.'); return; }
-
-  // Team pairing row — show in team mode with locked pairings for current round
   const tpRow = el('rm-team-pairing-row');
   const tpSel = el('rm-team-pairing');
   if (state.teamMode) {
-    // Combine locked + pending team pairings for the current round
     const roundPairings = [
-      ...(state.teamPairings || []).filter(tp => tp.round === state.currentRound - 1),
-      ...(state.pendingTeamPairings || []).map(tp => ({ ...tp, round: state.currentRound })),
+      ...(state.teamPairings||[]).filter(tp => tp.round === state.currentRound - 1),
+      ...(state.pendingTeamPairings||[]).map(tp => ({ ...tp, round: state.currentRound })),
     ];
     if (roundPairings.length > 0) {
       tpRow.style.display = '';
@@ -2265,34 +1993,23 @@ function openRecordMatchModal() {
           const t2 = state.teams.find(t => t.id === tp.team2Id);
           return `<option value="${tp.id}">${t1?.name||'?'} vs ${t2?.name||'?'}</option>`;
         }).join('');
-    } else {
-      tpRow.style.display = 'none';
-    }
-  } else {
-    tpRow.style.display = 'none';
-  }
-
+    } else { tpRow.style.display = 'none'; }
+  } else { tpRow.style.display = 'none'; }
   el('rm-p1').innerHTML = players.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
   el('rm-p2').innerHTML = players.map((p,i) => `<option value="${p.id}" ${i===1?'selected':''}>${p.name}</option>`).join('');
   el('rm-round').value = state.currentRound;
-  el('rm-p1-vp').value = 0;
-  el('rm-p2-vp').value = 0;
-  el('rm-p1-sp').value = 0;
-  el('rm-p2-sp').value = 0;
-  el('rm-p1-result').value = 'win';
-  el('rm-p2-result').value = 'loss';
+  el('rm-p1-vp').value = 0; el('rm-p2-vp').value = 0;
+  el('rm-p1-sp').value = 0; el('rm-p2-sp').value = 0;
+  el('rm-p1-result').value = 'win'; el('rm-p2-result').value = 'loss';
   updateMatchPhaseDisplay();
   el('rm-round').addEventListener('input', updateMatchPhaseDisplay);
   openModal('modal-record-match');
 }
-
 function updateRmPlayersFromPairing() {
   const tpId = el('rm-team-pairing').value;
   if (!tpId) return;
-  // Find the pairing in locked or pending
   const tp = [...(state.teamPairings||[]), ...(state.pendingTeamPairings||[])].find(t => t.id === tpId);
   if (!tp) return;
-  // Filter player selects to members of the two teams
   const team1members = getTeamMembers(tp.team1Id);
   const team2members = getTeamMembers(tp.team2Id);
   const t1 = state.teams.find(t => t.id === tp.team1Id);
@@ -2302,47 +2019,36 @@ function updateRmPlayersFromPairing() {
   el('rm-p2').innerHTML = team2members.map(p => `<option value="${p.id}">${p.name}</option>`).join('') ||
     `<option value="">No players in ${t2?.name||'Team 2'}</option>`;
 }
-
 function updateMatchPhaseDisplay() {
   const round = parseInt(el('rm-round').value) || 1;
   el('rm-phase').value = `Phase ${getPhaseForRound(round)}`;
 }
-
 function recordMatch() {
-  const p1id = el('rm-p1').value;
-  const p2id = el('rm-p2').value;
+  const p1id = el('rm-p1').value, p2id = el('rm-p2').value;
   if (p1id === p2id) { toast('Players must be different.'); return; }
   const round = parseInt(el('rm-round').value) || state.currentRound;
   const phase = getPhaseForRound(round);
   const teamPairingId = state.teamMode ? (el('rm-team-pairing').value || null) : null;
-  const match = {
-    id: Date.now(),
-    round, phase,
+  state.matches.push({
+    id: Date.now(), round, phase,
     p1: p1id, p2: p2id,
     p1result: el('rm-p1-result').value,
     p2result: el('rm-p2-result').value,
-    p1vp: parseInt(el('rm-p1-vp').value) || 0,
-    p2vp: parseInt(el('rm-p2-vp').value) || 0,
-    p1sp: parseInt(el('rm-p1-sp').value) || 0,
-    p2sp: parseInt(el('rm-p2-sp').value) || 0,
+    p1vp: parseInt(el('rm-p1-vp').value)||0,
+    p2vp: parseInt(el('rm-p2-vp').value)||0,
+    p1sp: parseInt(el('rm-p1-sp').value)||0,
+    p2sp: parseInt(el('rm-p2-sp').value)||0,
     teamPairingId,
-  };
-  state.matches.push(match);
-  save();
-  closeModal('modal-record-match');
-  renderAll();
-  toast('Match recorded. For the Emperor!');
+  });
+  save(); closeModal('modal-record-match'); renderAll(); toast('Match recorded. For the Emperor!');
 }
-
 function deleteMatch(id) {
   if (!confirm('Delete this match record?')) return;
   state.matches = state.matches.filter(m => m.id !== id);
-  save();
-  renderAll();
-  toast('Match deleted.');
+  save(); renderAll(); toast('Match deleted.');
 }
 
-// ─── Bye SP Recording ─────────────────────────────────────────────────────────
+// ─── Bye SP ───────────────────────────────────────────────────────────────────
 function openByeSPModal(playerId) {
   const p = state.players.find(pl => pl.id === playerId);
   if (!p) return;
@@ -2352,30 +2058,23 @@ function openByeSPModal(playerId) {
   el('bsp-sp').value = 0;
   openModal('modal-bye-sp');
 }
-
 function recordByeSP() {
   const playerId = el('bsp-playerid').value;
   const sp = parseInt(el('bsp-sp').value) || 0;
   const round = parseInt(el('bsp-round').value) || state.currentRound;
   const phase = getPhaseForRound(round);
   if (sp === 0) { closeModal('modal-bye-sp'); return; }
-  // Record as a bye match entry (p2 = 'BYE' sentinel)
   state.matches.push({
-    id: Date.now(),
-    round, phase,
+    id: Date.now(), round, phase,
     p1: playerId, p2: '__BYE__',
     p1result: 'bye', p2result: 'bye',
-    p1vp: 0, p2vp: 0,
-    p1sp: sp, p2sp: 0,
+    p1vp: 0, p2vp: 0, p1sp: sp, p2sp: 0,
     isBye: true,
   });
-  save();
-  closeModal('modal-bye-sp');
-  renderAll();
-  toast('Bye SP recorded.');
+  save(); closeModal('modal-bye-sp'); renderAll(); toast('Bye SP recorded.');
 }
 
-
+// ─── Data ─────────────────────────────────────────────────────────────────────
 function exportData() {
   const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
@@ -2383,23 +2082,16 @@ function exportData() {
   a.href = url; a.download = `${state.name.replace(/\s+/g,'_')}_crusade.json`;
   a.click(); URL.revokeObjectURL(url);
 }
-
 function importData(event) {
   const file = event.target.files[0];
   if (!file) return;
   const reader = new FileReader();
   reader.onload = e => {
-    try {
-      const imported = JSON.parse(e.target.result);
-      state = imported;
-      save();
-      showApp();
-      toast('Crusade data imported.');
-    } catch { toast('Invalid file.'); }
+    try { state = JSON.parse(e.target.result); save(); showApp(); toast('Crusade data imported.'); }
+    catch { toast('Invalid file.'); }
   };
   reader.readAsText(file);
 }
-
 function resetCrusade() {
   if (!confirm('Are you sure you want to reset and start a new Crusade? All data will be lost.')) return;
   localStorage.removeItem('crusade_state');
@@ -2415,68 +2107,48 @@ function toggleMobileNav() {
   nav.classList.toggle('open');
   btn.classList.toggle('open');
 }
-
 function closeMobileNav() {
   el('mobile-nav').classList.remove('open');
   el('hamburger').classList.remove('open');
 }
-
 function showView(name) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   el('view-'+name).classList.add('active');
-  // Sync both desktop nav and mobile nav
-  const selector = `[onclick="showView('${name}')"]`;
   document.querySelectorAll('nav button, #mobile-nav button').forEach(b => {
     b.classList.toggle('active', b.getAttribute('onclick') === `showView('${name}')`);
   });
   closeMobileNav();
-  if (name === 'matches') renderMatches();
+  if (name === 'matches')   renderMatches();
   if (name === 'standings') renderStandings();
-  if (name === 'pairings') renderPairings();
+  if (name === 'pairings')  renderPairings();
   if (name === 'alliances') renderAlliances();
-  if (name === 'print') renderPrintPreview();
+  if (name === 'print')     renderPrintPreview();
 }
-
-function openModal(id) { el(id).classList.add('open'); }
+function openModal(id)  { el(id).classList.add('open'); }
 function closeModal(id) { el(id).classList.remove('open'); }
 document.addEventListener('click', e => {
-  if (e.target.classList.contains('modal-overlay')) {
-    e.target.classList.remove('open');
-  }
-  // Close mobile nav if tapping outside header/nav
-  const nav = el('mobile-nav');
-  const hamburger = el('hamburger');
+  if (e.target.classList.contains('modal-overlay')) e.target.classList.remove('open');
+  const nav = el('mobile-nav'), hamburger = el('hamburger');
   if (nav && nav.classList.contains('open')) {
-    if (!nav.contains(e.target) && !hamburger.contains(e.target)) {
-      closeMobileNav();
-    }
+    if (!nav.contains(e.target) && !hamburger.contains(e.target)) closeMobileNav();
   }
 });
 
 // ─── Print ────────────────────────────────────────────────────────────────────
-
 function printPage(subtitle, content) {
   return `<div class="print-page">${buildPrintHeader(subtitle)}${content}</div>`;
 }
-
 function buildPrintHeader(subtitle) {
   const now = new Date().toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
-  return `<div class="print-header">
-    <h1>${state.name}</h1>
-    <div class="print-sub">${subtitle} &nbsp;·&nbsp; Printed ${now}</div>
-  </div>`;
+  return `<div class="print-header"><h1>${state.name}</h1><div class="print-sub">${subtitle} &nbsp;·&nbsp; Printed ${now}</div></div>`;
 }
-
 function buildPrintFooter() {
   const now = new Date().toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
-  return `<div class="print-footer">
-    <span>${state.name}</span><span>${now}</span>
-  </div>`;
+  return `<div class="print-footer"><span>${state.name}</span><span>${now}</span></div>`;
 }
 
 function buildCoverPage() {
   const cp = getCurrentPhase();
-  const rpp = getRoundsPerPhase();
   const { start, end } = getPhaseRoundRange(cp);
   const now = new Date().toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
   return `<div class="print-page" style="display:flex;flex-direction:column;justify-content:center;min-height:80vh;text-align:center;">
@@ -2496,10 +2168,7 @@ function buildCoverPage() {
 
 function buildPhaseSummary() {
   const spPerMatch = state.spMethod === 'per_match';
-  let html = `<div class="print-page">
-    ${buildPrintHeader(`Round ${state.currentRound} · Phase ${getCurrentPhase()} of ${state.numPhases}`)}
-    <div class="print-section-title">Phase Summary</div>`;
-
+  let html = `<div class="print-page">${buildPrintHeader(`Round ${state.currentRound} · Phase ${getCurrentPhase()} of ${state.numPhases}`)}<div class="print-section-title">Phase Summary</div>`;
   if (state.numAlliances === 0) {
     html += `<p style="font-size:10pt;color:#555;font-style:italic;">Individual tournament — no alliance phase tracking.</p>`;
   } else {
@@ -2514,17 +2183,12 @@ function buildPhaseSummary() {
       html += `<div style="margin-bottom:14pt;">
         <div style="font-weight:bold;font-size:11pt;margin-bottom:4pt;">
           Phase ${p} — Rounds ${start}–${end}
-          ${winner ? ` &nbsp;·&nbsp; <em>Winner: ${winner.name}</em>` : (p === cp ? ' &nbsp;·&nbsp; <em>In Progress</em>' : ' &nbsp;·&nbsp; <em>Upcoming</em>')}
+          ${winner ? ` · <em>Winner: ${winner.name}</em>` : (p === cp ? ' · <em>In Progress</em>' : ' · <em>Upcoming</em>')}
         </div>
         <table class="print-table">
-          <thead><tr>
-            <th>Alliance</th><th>SP</th><th>Matches</th>
-            ${spPerMatch ? '<th>SP / Match</th>' : ''}
-          </tr></thead>
+          <thead><tr><th>Alliance</th><th>SP</th><th>Matches</th>${spPerMatch ? '<th>SP / Match</th>' : ''}</tr></thead>
           <tbody>${rows.map(r => `<tr>
-            <td>${r.alliance.name}</td>
-            <td>${r.sp}</td>
-            <td>${r.matchesPlayed}</td>
+            <td>${r.alliance.name}</td><td>${r.sp}</td><td>${r.matchesPlayed}</td>
             ${spPerMatch ? `<td><strong>${r.label}</strong></td>` : ''}
           </tr>`).join('')}</tbody>
         </table>
@@ -2537,51 +2201,34 @@ function buildPhaseSummary() {
 
 function buildRosters() {
   let innerHtml = `<div class="print-section-title">Rosters</div>`;
-
   if (state.teamMode && state.teams.length > 0) {
-    // Team mode: group by alliance -> team -> players
     const groups = state.alliances.length > 0 ? state.alliances : [null];
     groups.forEach(alliance => {
-      const allianceTeams = alliance
-        ? state.teams.filter(t => t.allianceId === alliance.id)
-        : state.teams;
-      if (alliance) {
-        innerHtml += `<div style="font-weight:bold;font-size:11pt;margin-bottom:4pt;">${alliance.name}</div>`;
-      }
+      const allianceTeams = alliance ? state.teams.filter(t => t.allianceId === alliance.id) : state.teams;
+      if (alliance) innerHtml += `<div style="font-weight:bold;font-size:11pt;margin-bottom:4pt;">${alliance.name}</div>`;
       allianceTeams.forEach(team => {
         const members = getTeamMembers(team.id);
         const cap = state.players.find(p => p.id === team.captainPlayerId);
         innerHtml += `<div style="margin-bottom:10pt;margin-left:${alliance?'12pt':'0'};">
           <div style="font-weight:bold;font-size:10pt;margin-bottom:3pt;">${team.name}${cap ? ` — Captain: ${cap.name}` : ''}</div>
-          <table class="print-table"><thead><tr>
-            <th>Player</th><th>Faction</th><th>W</th><th>L</th><th>Win%</th><th>VP</th>
-          </tr></thead><tbody>`;
+          <table class="print-table"><thead><tr><th>Player</th><th>Faction</th><th>W</th><th>L</th><th>Win%</th><th>VP</th></tr></thead><tbody>`;
         if (members.length === 0) {
           innerHtml += `<tr><td colspan="6" style="color:#888;font-style:italic;">No players</td></tr>`;
         } else {
           members.forEach(p => {
             const st = getPlayerStats(p.id);
-            innerHtml += `<tr>
-              <td>${p.id === team.captainPlayerId ? '⚑ ' : ''}${p.name}</td>
-              <td>${p.faction||'—'}</td>
-              <td>${st.wins}</td><td>${st.losses}</td>
-              <td>${(st.winPct*100).toFixed(0)}%</td>
-              <td>${st.vpFor}</td>
-            </tr>`;
+            innerHtml += `<tr><td>${p.id===team.captainPlayerId?'⚑ ':''}${p.name}</td><td>${p.faction||'—'}</td>
+              <td>${st.wins}</td><td>${st.losses}</td><td>${(st.winPct*100).toFixed(0)}%</td><td>${st.vpFor}</td></tr>`;
           });
         }
         innerHtml += `</tbody></table></div>`;
       });
     });
   } else if (state.numAlliances === 0) {
-    innerHtml += `<table class="print-table"><thead><tr>
-      <th>Player</th><th>Faction</th><th>W</th><th>L</th><th>Win%</th>
-    </tr></thead><tbody>`;
+    innerHtml += `<table class="print-table"><thead><tr><th>Player</th><th>Faction</th><th>W</th><th>L</th><th>Win%</th></tr></thead><tbody>`;
     state.players.forEach(p => {
       const st = getPlayerStats(p.id);
-      innerHtml += `<tr><td>${p.name}</td><td>${p.faction||'—'}</td>
-        <td>${st.wins}</td><td>${st.losses}</td>
-        <td>${(st.winPct*100).toFixed(0)}%</td></tr>`;
+      innerHtml += `<tr><td>${p.name}</td><td>${p.faction||'—'}</td><td>${st.wins}</td><td>${st.losses}</td><td>${(st.winPct*100).toFixed(0)}%</td></tr>`;
     });
     innerHtml += `</tbody></table>`;
   } else {
@@ -2589,17 +2236,13 @@ function buildRosters() {
       const players = state.players.filter(p => p.allianceId === alliance.id);
       innerHtml += `<div style="margin-bottom:14pt;">
         <div style="font-weight:bold;font-size:11pt;margin-bottom:4pt;">${alliance.name}</div>
-        <table class="print-table"><thead><tr>
-          <th>Player</th><th>Faction</th><th>W</th><th>L</th><th>Win%</th>
-        </tr></thead><tbody>`;
+        <table class="print-table"><thead><tr><th>Player</th><th>Faction</th><th>W</th><th>L</th><th>Win%</th></tr></thead><tbody>`;
       if (players.length === 0) {
         innerHtml += `<tr><td colspan="5" style="color:#888;font-style:italic;">No players assigned</td></tr>`;
       } else {
         players.forEach(p => {
           const st = getPlayerStats(p.id);
-          innerHtml += `<tr><td>${p.name}</td><td>${p.faction||'—'}</td>
-            <td>${st.wins}</td><td>${st.losses}</td>
-            <td>${(st.winPct*100).toFixed(0)}%</td></tr>`;
+          innerHtml += `<tr><td>${p.name}</td><td>${p.faction||'—'}</td><td>${st.wins}</td><td>${st.losses}</td><td>${(st.winPct*100).toFixed(0)}%</td></tr>`;
         });
       }
       innerHtml += `</tbody></table></div>`;
@@ -2611,17 +2254,13 @@ function buildRosters() {
 function buildIndividualStandings() {
   const rows = state.players.map(p => {
     const s = getPlayerStats(p.id);
-    const ogw = getOGW(p.id);
-    const alliance = playerAlliance(p);
-    return { p, s, ogw, alliance };
+    return { p, s, ogw: getOGW(p.id), alliance: playerAlliance(p) };
   }).sort((a,b) => b.s.wins - a.s.wins || b.ogw - a.ogw);
-
   let inner = `<div class="print-section-title">Individual Standings</div>
     <table class="print-table"><thead><tr>
       <th>#</th><th>Player</th>
       ${state.numAlliances > 0 ? '<th>Alliance</th>' : ''}
-      <th>W</th><th>L</th><th>Win%</th>
-      <th>VP For</th><th>VP Ag.</th><th>OGW%</th><th>Win Path</th>
+      <th>W</th><th>L</th><th>Win%</th><th>VP For</th><th>VP Ag.</th><th>OGW%</th><th>Win Path</th>
     </tr></thead><tbody>`;
   rows.forEach((r, i) => {
     inner += `<tr>
@@ -2639,23 +2278,17 @@ function buildIndividualStandings() {
   return printPage('Individual Standings', inner);
 }
 
-function buildPairingsSection() {
-  return state.teamMode ? buildTeamPairingsSection() : buildIndividualPairingsSection();
-}
+function buildPairingsSection() { return state.teamMode ? buildTeamPairingsSection() : buildIndividualPairingsSection(); }
 
 function buildIndividualPairingsSection() {
   const pairs = state.pendingPairings || [];
-  const byes = (state.pendingByes || []).map(id => state.players.find(p => p.id === id)).filter(Boolean);
+  const byes  = (state.pendingByes||[]).map(id => state.players.find(p => p.id === id)).filter(Boolean);
   const round = state.currentRound;
   const rec = p => p ? `${p.name} (${getPlayerStats(p.id).wins}W\u2013${getPlayerStats(p.id).losses}L)` : '?';
-
-  let inner = `<div class="print-section-title">Round ${round} Pairings \u00b7 Phase ${getCurrentPhase()} of ${state.numPhases}</div>
-    <table class="print-table">
-      <thead><tr>
-        <th style="width:28pt;">#</th><th>Player</th>
-        <th style="width:30pt;text-align:center;">vs</th><th>Player</th>
-      </tr></thead><tbody>`;
-
+  let inner = `<div class="print-section-title">Round ${round} Pairings · Phase ${getCurrentPhase()} of ${state.numPhases}</div>
+    <table class="print-table"><thead><tr>
+      <th style="width:28pt;">#</th><th>Player</th><th style="width:30pt;text-align:center;">vs</th><th>Player</th>
+    </tr></thead><tbody>`;
   if (pairs.length === 0) {
     inner += `<tr><td colspan="4" style="color:#888;font-style:italic;text-align:center;">No pairings generated yet.</td></tr>`;
   } else {
@@ -2679,10 +2312,9 @@ function buildIndividualPairingsSection() {
 
 function buildTeamPairingsSection() {
   const pending = state.pendingTeamPairings || [];
-  const byes = (state.pendingByes || []).map(id => state.teams.find(t => t.id === id)).filter(Boolean);
+  const byes  = (state.pendingByes||[]).map(id => state.teams.find(t => t.id === id)).filter(Boolean);
   const round = state.currentRound;
-  let inner = `<div class="print-section-title">Round ${round} Team Pairings \u00b7 Phase ${getCurrentPhase()} of ${state.numPhases}</div>`;
-
+  let inner = `<div class="print-section-title">Round ${round} Team Pairings · Phase ${getCurrentPhase()} of ${state.numPhases}</div>`;
   if (pending.length === 0) {
     inner += `<p style="color:#888;font-style:italic;">No team pairings generated yet.</p>`;
   } else {
@@ -2695,97 +2327,67 @@ function buildTeamPairingsSection() {
       const members2 = team2 ? getTeamMembers(team2.id) : [];
       const cap1 = team1 ? state.players.find(p => p.id === team1.captainPlayerId) : null;
       const cap2 = team2 ? state.players.find(p => p.id === team2.captainPlayerId) : null;
-      const tvp1 = team1 ? getTeamVP(team1.id) : 0;
-      const tvp2 = team2 ? getTeamVP(team2.id) : 0;
+      const tvp1 = team1 ? getTeamVP(team1.id) : 0, tvp2 = team2 ? getTeamVP(team2.id) : 0;
       const twl1 = team1 ? getTeamWL(team1.id) : {wins:0,losses:0};
       const twl2 = team2 ? getTeamWL(team2.id) : {wins:0,losses:0};
-
-      const memberRows = (members, capId) => members.length === 0
-        ? `<tr><td colspan="3" style="color:#888;font-style:italic;">No players</td></tr>`
-        : members.map(p => {
-            const st = getPlayerStats(p.id);
-            const ogw = (getOGW(p.id)*100).toFixed(1);
-            return `<tr>
-              <td>${p.id === capId ? '\u2691 ' : ''}${p.name}</td>
-              <td style="text-align:center;">${st.wins}W\u2013${st.losses}L</td>
-              <td style="text-align:right;">${ogw}% OGW</td>
-            </tr>`;
-          }).join('');
-
-      // Assignment rows: one per max(members1, members2) + 1 overflow
       const assignRows = Math.max(members1.length, members2.length) + 1;
-
       inner += `<div style="margin-bottom:16pt;page-break-inside:avoid;">
         <div style="font-weight:bold;font-size:11pt;margin-bottom:4pt;">Pairing ${i+1}</div>
-        <table class="print-table" style="font-size:9pt;">
-          <thead><tr>
-            <th style="width:50%">${team1?.name||'?'}${a1 ? ` (${a1.name})` : ''}</th>
-            <th style="width:50%">${team2?.name||'?'}${a2 ? ` (${a2.name})` : ''}</th>
-          </tr></thead>
-          <tbody><tr style="background:#f0f0f0;font-size:8.5pt;">
-            <td>Captain: ${cap1?.name||'\u2014'} \u00b7 ${tvp1} VP \u00b7 ${twl1.wins}W\u2013${twl1.losses}L</td>
-            <td>Captain: ${cap2?.name||'\u2014'} \u00b7 ${tvp2} VP \u00b7 ${twl2.wins}W\u2013${twl2.losses}L</td>
-          </tr></tbody>
-        </table>
-        <table class="print-table" style="font-size:8.5pt;">
-          <thead><tr>
-            <th>Player</th><th style="text-align:center;">Record</th><th style="text-align:right;">OGW%</th>
-            <th>Player</th><th style="text-align:center;">Record</th><th style="text-align:right;">OGW%</th>
-          </tr></thead>
-          <tbody>
-            ${Array.from({length: Math.max(members1.length, members2.length)}, (_,idx) => {
-              const p1 = members1[idx], p2 = members2[idx];
-              const s1 = p1 ? getPlayerStats(p1.id) : null;
-              const s2 = p2 ? getPlayerStats(p2.id) : null;
-              return `<tr>
-                <td>${p1 ? (p1.id===team1?.captainPlayerId?'\u2691 ':'')+p1.name : ''}</td>
-                <td style="text-align:center;">${s1 ? `${s1.wins}W\u2013${s1.losses}L` : ''}</td>
-                <td style="text-align:right;">${s1 ? (getOGW(p1.id)*100).toFixed(1)+'%' : ''}</td>
-                <td>${p2 ? (p2.id===team2?.captainPlayerId?'\u2691 ':'')+p2.name : ''}</td>
-                <td style="text-align:center;">${s2 ? `${s2.wins}W\u2013${s2.losses}L` : ''}</td>
-                <td style="text-align:right;">${s2 ? (getOGW(p2.id)*100).toFixed(1)+'%' : ''}</td>
-              </tr>`;
-            }).join('')}
-          </tbody>
-        </table>
+        <table class="print-table" style="font-size:9pt;"><thead><tr>
+          <th style="width:50%">${team1?.name||'?'}${a1 ? ` (${a1.name})` : ''}</th>
+          <th style="width:50%">${team2?.name||'?'}${a2 ? ` (${a2.name})` : ''}</th>
+        </tr></thead>
+        <tbody><tr style="background:#f0f0f0;font-size:8.5pt;">
+          <td>Captain: ${cap1?.name||'—'} · ${tvp1} VP · ${twl1.wins}W–${twl1.losses}L</td>
+          <td>Captain: ${cap2?.name||'—'} · ${tvp2} VP · ${twl2.wins}W–${twl2.losses}L</td>
+        </tr></tbody></table>
+        <table class="print-table" style="font-size:8.5pt;"><thead><tr>
+          <th>Player</th><th style="text-align:center;">Record</th><th style="text-align:right;">OGW%</th>
+          <th>Player</th><th style="text-align:center;">Record</th><th style="text-align:right;">OGW%</th>
+        </tr></thead><tbody>
+        ${Array.from({length: Math.max(members1.length, members2.length)}, (_,idx) => {
+          const p1 = members1[idx], p2 = members2[idx];
+          const s1 = p1 ? getPlayerStats(p1.id) : null;
+          const s2 = p2 ? getPlayerStats(p2.id) : null;
+          return `<tr>
+            <td>${p1 ? (p1.id===team1?.captainPlayerId?'⚑ ':'')+p1.name : ''}</td>
+            <td style="text-align:center;">${s1 ? `${s1.wins}W–${s1.losses}L` : ''}</td>
+            <td style="text-align:right;">${s1 ? (getOGW(p1.id)*100).toFixed(1)+'%' : ''}</td>
+            <td>${p2 ? (p2.id===team2?.captainPlayerId?'⚑ ':'')+p2.name : ''}</td>
+            <td style="text-align:center;">${s2 ? `${s2.wins}W–${s2.losses}L` : ''}</td>
+            <td style="text-align:right;">${s2 ? (getOGW(p2.id)*100).toFixed(1)+'%' : ''}</td>
+          </tr>`;
+        }).join('')}
+        </tbody></table>
         <div style="margin-top:6pt;font-size:8pt;color:#888;font-style:italic;">Captains: write match assignments in the table below</div>
-        <table class="print-table" style="font-size:9pt;margin-top:4pt;">
-          <thead><tr>
-            <th style="width:24pt;">#</th>
-            <th>${team1?.name||'Team 1'} Player</th>
-            <th style="width:18pt;text-align:center;">vs</th>
-            <th>${team2?.name||'Team 2'} Player</th>
-          </tr></thead>
-          <tbody>${Array.from({length: assignRows}, (_,idx) =>
-            `<tr style="height:18pt;">
-              <td style="text-align:center;${idx===assignRows-1?'color:#bbb;':''}">${idx+1}</td>
-              <td></td><td style="text-align:center;">vs</td><td></td>
-            </tr>`).join('')}
-          </tbody>
-        </table>
+        <table class="print-table" style="font-size:9pt;margin-top:4pt;"><thead><tr>
+          <th style="width:24pt;">#</th>
+          <th>${team1?.name||'Team 1'} Player</th>
+          <th style="width:18pt;text-align:center;">vs</th>
+          <th>${team2?.name||'Team 2'} Player</th>
+        </tr></thead><tbody>
+        ${Array.from({length: assignRows}, (_,idx) =>
+          `<tr style="height:18pt;">
+            <td style="text-align:center;${idx===assignRows-1?'color:#bbb;':''}">${idx+1}</td>
+            <td></td><td style="text-align:center;">vs</td><td></td>
+          </tr>`).join('')}
+        </tbody></table>
       </div>`;
     });
   }
-  if (byes.length > 0) {
-    inner += `<div class="print-bye-box"><strong>Bye team${byes.length>1?'s':''}:</strong> ${byes.map(t=>t.name).join(', ')}</div>`;
-  }
+  if (byes.length > 0) inner += `<div class="print-bye-box"><strong>Bye team${byes.length>1?'s':''}:</strong> ${byes.map(t=>t.name).join(', ')}</div>`;
   return printPage(`Round ${round} Team Pairings`, inner);
 }
-
 
 function buildMatchHistory() {
   const rounds = [...new Set(state.matches.filter(m=>!m.isBye).map(m=>m.round))].sort((a,b)=>a-b);
   let inner = `<div class="print-section-title">Match History</div>`;
-
-  if (rounds.length === 0) {
-    inner += `<p style="color:#888;font-style:italic;">No matches recorded.</p>`;
-  }
-
+  if (rounds.length === 0) inner += `<p style="color:#888;font-style:italic;">No matches recorded.</p>`;
   rounds.forEach(round => {
     const phase = getPhaseForRound(round);
     const matches = state.matches.filter(m => m.round === round && !m.isBye);
     inner += `<div style="margin-bottom:12pt;">
-      <div style="font-weight:bold;font-size:10pt;margin-bottom:3pt;">Round ${round} &nbsp;·&nbsp; Phase ${phase}</div>
+      <div style="font-weight:bold;font-size:10pt;margin-bottom:3pt;">Round ${round} · Phase ${phase}</div>
       <table class="print-table"><thead><tr>
         <th>Player 1</th><th>VP</th><th>SP</th><th>Result</th><th>SP</th><th>VP</th><th>Player 2</th>
       </tr></thead><tbody>`;
@@ -2793,16 +2395,13 @@ function buildMatchHistory() {
       const p1 = state.players.find(p => p.id === m.p1);
       const p2 = state.players.find(p => p.id === m.p2);
       inner += `<tr>
-        <td>${p1?.name||'?'}</td>
-        <td>${m.p1vp}</td><td>${m.p1sp}</td>
+        <td>${p1?.name||'?'}</td><td>${m.p1vp}</td><td>${m.p1sp}</td>
         <td style="text-align:center;font-weight:bold;">${m.p1result.toUpperCase()} / ${m.p2result.toUpperCase()}</td>
-        <td>${m.p2sp}</td><td>${m.p2vp}</td>
-        <td>${p2?.name||'?'}</td>
+        <td>${m.p2sp}</td><td>${m.p2vp}</td><td>${p2?.name||'?'}</td>
       </tr>`;
     });
     inner += `</tbody></table></div>`;
   });
-
   return printPage('Match History', inner);
 }
 
@@ -2810,88 +2409,53 @@ function buildScoresheet() {
   const rpp = getRoundsPerPhase();
   const totalRounds = state.numPhases * rpp;
   const matchesPerRound = Math.floor(state.players.length / 2);
-  const rowsPerRound = matchesPerRound + 1; // +1 for bye or overflow
-
-  const matchesByRound = {};
+  const rowsPerRound = matchesPerRound + 1;
+  const matchesByRound = {}, pendingByRound = {}, byesByRound = {};
   state.matches.filter(m => !m.isBye).forEach(m => {
     if (!matchesByRound[m.round]) matchesByRound[m.round] = [];
     matchesByRound[m.round].push(m);
   });
-
-  const pendingByRound = {};
-  if (state.pendingPairings && state.pendingPairings.length > 0) {
-    pendingByRound[state.currentRound] = state.pendingPairings;
-  }
-
-  const byesByRound = {};
+  if (state.pendingPairings?.length > 0) pendingByRound[state.currentRound] = state.pendingPairings;
   state.matches.filter(m => m.isBye).forEach(m => {
     if (!byesByRound[m.round]) byesByRound[m.round] = [];
     const p = state.players.find(pl => pl.id === m.p1);
     if (p && !byesByRound[m.round].includes(p.name)) byesByRound[m.round].push(p.name);
   });
-  if (state.pendingByes && state.pendingByes.length > 0) {
+  if (state.pendingByes?.length > 0) {
     if (!byesByRound[state.currentRound]) byesByRound[state.currentRound] = [];
     state.pendingByes.forEach(id => {
       const p = state.players.find(pl => pl.id === id);
-      if (p && !byesByRound[state.currentRound].includes(p.name))
-        byesByRound[state.currentRound].push(p.name);
+      if (p && !byesByRound[state.currentRound].includes(p.name)) byesByRound[state.currentRound].push(p.name);
     });
   }
-
   const checkCell = '<span style="font-size:13pt;">&#9744;</span>';
   const filledCheck = '<span style="font-size:13pt;">&#9745;</span>';
-
-  const colgroup = `<colgroup>
-    <col style="width:22pt"><col><col style="width:24pt"><col style="width:30pt"><col style="width:30pt">
-    <col style="width:8pt"><col style="width:30pt"><col style="width:30pt"><col style="width:24pt"><col>
-  </colgroup>`;
-
+  const colgroup = `<colgroup><col style="width:22pt"><col><col style="width:24pt"><col style="width:30pt"><col style="width:30pt"><col style="width:8pt"><col style="width:30pt"><col style="width:30pt"><col style="width:24pt"><col></colgroup>`;
   const thead = `<thead><tr>
-    <th style="text-align:center;">#</th>
-    <th>Player 1</th>
-    <th style="text-align:center;">Win</th>
-    <th style="text-align:center;">VP</th>
-    <th style="text-align:center;">SP</th>
+    <th style="text-align:center;">#</th><th>Player 1</th>
+    <th style="text-align:center;">Win</th><th style="text-align:center;">VP</th><th style="text-align:center;">SP</th>
     <th style="text-align:center;border-left:none;border-right:none;"></th>
-    <th style="text-align:center;">SP</th>
-    <th style="text-align:center;">VP</th>
-    <th style="text-align:center;">Win</th>
+    <th style="text-align:center;">SP</th><th style="text-align:center;">VP</th><th style="text-align:center;">Win</th>
     <th>Player 2</th>
   </tr></thead>`;
-
-  function blankRow(i) {
-    return `<tr style="height:18pt;">
-      <td style="text-align:center;color:#bbb;">${i}</td>
-      <td></td><td style="text-align:center;">${checkCell}</td>
-      <td></td><td></td>
-      <td style="text-align:center;color:#ccc;border-left:none;border-right:none;">|</td>
-      <td></td><td></td>
-      <td style="text-align:center;">${checkCell}</td>
-      <td></td>
-    </tr>`;
-  }
-
-  function byeRow(names) {
-    return `<tr style="height:18pt;"><td style="text-align:center;">&#8212;</td>
-      <td colspan="9" style="color:#555;font-style:italic;">Bye: ${names.join(', ')}</td></tr>`;
-  }
-
-  let html = `<div class="print-page">
-    ${buildPrintHeader('Round Scoresheet')}
-    <div class="print-section-title">Round Scoresheet</div>`;
-
+  const blankRow = (i) => `<tr style="height:18pt;">
+    <td style="text-align:center;color:#bbb;">${i}</td>
+    <td></td><td style="text-align:center;">${checkCell}</td><td></td><td></td>
+    <td style="text-align:center;color:#ccc;border-left:none;border-right:none;">|</td>
+    <td></td><td></td><td style="text-align:center;">${checkCell}</td><td></td>
+  </tr>`;
+  const byeRow = (names) => `<tr style="height:18pt;"><td style="text-align:center;">—</td>
+    <td colspan="9" style="color:#555;font-style:italic;">Bye: ${names.join(', ')}</td></tr>`;
+  let html = `<div class="print-page">${buildPrintHeader('Round Scoresheet')}<div class="print-section-title">Round Scoresheet</div>`;
   let pageRoundCount = 0;
-
   for (let round = 1; round <= totalRounds; round++) {
     const phase = getPhaseForRound(round);
     const completed = matchesByRound[round] || [];
-    const pending = pendingByRound[round] || [];
-    const byes = byesByRound[round] || [];
+    const pending   = pendingByRound[round] || [];
+    const byes      = byesByRound[round]    || [];
     const isComplete = completed.length > 0;
-    const isPending = !isComplete && pending.length > 0;
-
+    const isPending  = !isComplete && pending.length > 0;
     let rows = '';
-
     if (isComplete) {
       completed.forEach((m, i) => {
         const p1 = state.players.find(p => p.id === m.p1);
@@ -2899,15 +2463,11 @@ function buildScoresheet() {
         const p1win = m.p1result === 'win', p2win = m.p2result === 'win';
         rows += `<tr style="height:18pt;">
           <td style="text-align:center;">${i+1}</td>
-          <td>${p1?.name||'?'}</td>
-          <td style="text-align:center;">${p1win ? filledCheck : checkCell}</td>
-          <td style="text-align:center;">${m.p1vp}</td>
-          <td style="text-align:center;">${m.p1sp}</td>
+          <td>${p1?.name||'?'}</td><td style="text-align:center;">${p1win ? filledCheck : checkCell}</td>
+          <td style="text-align:center;">${m.p1vp}</td><td style="text-align:center;">${m.p1sp}</td>
           <td style="text-align:center;color:#ccc;border-left:none;border-right:none;">|</td>
-          <td style="text-align:center;">${m.p2sp}</td>
-          <td style="text-align:center;">${m.p2vp}</td>
-          <td style="text-align:center;">${p2win ? filledCheck : checkCell}</td>
-          <td>${p2?.name||'?'}</td>
+          <td style="text-align:center;">${m.p2sp}</td><td style="text-align:center;">${m.p2vp}</td>
+          <td style="text-align:center;">${p2win ? filledCheck : checkCell}</td><td>${p2?.name||'?'}</td>
         </tr>`;
       });
       rows += byes.length > 0 ? byeRow(byes) : blankRow(completed.length + 1);
@@ -2917,44 +2477,35 @@ function buildScoresheet() {
         const p2 = state.players.find(p => p.id === pair.p2);
         rows += `<tr style="height:18pt;">
           <td style="text-align:center;">${i+1}</td>
-          <td>${p1?.name||'?'}</td>
-          <td style="text-align:center;">${checkCell}</td>
+          <td>${p1?.name||'?'}</td><td style="text-align:center;">${checkCell}</td>
           <td></td><td></td>
           <td style="text-align:center;color:#ccc;border-left:none;border-right:none;">|</td>
-          <td></td><td></td>
-          <td style="text-align:center;">${checkCell}</td>
-          <td>${p2?.name||'?'}</td>
+          <td></td><td></td><td style="text-align:center;">${checkCell}</td><td>${p2?.name||'?'}</td>
         </tr>`;
       });
       rows += byes.length > 0 ? byeRow(byes) : blankRow(pending.length + 1);
     } else {
       for (let i = 1; i <= rowsPerRound; i++) rows += blankRow(i);
     }
-
     html += `<div style="margin-bottom:10pt;page-break-inside:avoid;">
       <div style="font-weight:bold;font-size:10pt;margin-bottom:2pt;display:flex;justify-content:space-between;">
-        <span>Round ${round} &nbsp;&middot;&nbsp; Phase ${phase}</span>
+        <span>Round ${round} · Phase ${phase}</span>
         <span style="font-weight:normal;font-size:9pt;color:#666;">${isComplete ? 'Completed' : isPending ? 'Pairings Set' : 'Upcoming'}</span>
       </div>
       <table class="print-table" style="font-size:9pt;">${colgroup}${thead}<tbody>${rows}</tbody></table>
     </div>`;
-
     pageRoundCount++;
     if (pageRoundCount === 3 && round < totalRounds) {
       html += `<div style="page-break-after:always;"></div>${buildPrintHeader('Round Scoresheet (cont.)')}<div class="print-section-title">Round Scoresheet</div>`;
       pageRoundCount = 0;
     }
   }
-
   html += '</div>';
   return html;
 }
 
 function assemblePrintDoc(sections) {
-  return `<div style="background:#fff;color:#000;">
-    ${buildPrintFooter()}
-    ${sections.join('\n')}
-  </div>`;
+  return `<div style="background:#fff;color:#000;">${buildPrintFooter()}${sections.join('\n')}</div>`;
 }
 
 function runFullPrint() {
@@ -2963,24 +2514,18 @@ function runFullPrint() {
   if (el('pc-phases').checked)    sections.push(buildPhaseSummary());
   if (el('pc-rosters').checked)   sections.push(buildRosters());
   if (el('pc-standings').checked) sections.push(buildIndividualStandings());
-  if (el('pc-pairings').checked && (state.pendingPairings||[]).length > 0)
-                                                        sections.push(buildPairingsSection());
+  if (el('pc-pairings').checked && (state.pendingPairings||[]).length > 0) sections.push(buildPairingsSection());
   if (el('pc-history').checked)   sections.push(buildMatchHistory());
   if (el('pc-scoresheet').checked) sections.push(buildScoresheet());
-
   if (sections.length === 0) { toast('Select at least one section to print.'); return; }
   triggerPrint(sections);
 }
 
 function quickPrintPairings() {
   if (state.teamMode) {
-    if (!state.pendingTeamPairings || state.pendingTeamPairings.length === 0) {
-      toast('Generate team pairings first.'); return;
-    }
+    if (!state.pendingTeamPairings?.length) { toast('Generate team pairings first.'); return; }
   } else {
-    if (!state.pendingPairings || state.pendingPairings.length === 0) {
-      toast('Generate pairings first.'); return;
-    }
+    if (!state.pendingPairings?.length) { toast('Generate pairings first.'); return; }
   }
   triggerPrint([buildPairingsSection()]);
 }
@@ -2989,16 +2534,11 @@ function triggerPrint(sections) {
   const render = el('view-print-render');
   render.innerHTML = assemblePrintDoc(sections);
   render.style.display = 'block';
-  // Hide all other views temporarily
   document.querySelectorAll('#main-app main .view:not(#view-print-render)').forEach(v => v.style.setProperty('display','none','important'));
   window.print();
-  // Restore after print dialog closes
   render.style.display = 'none';
   document.querySelectorAll('#main-app main .view').forEach(v => v.style.removeProperty('display'));
-  document.querySelectorAll('#main-app main .view').forEach(v => {
-    if (v.id !== 'view-print-render') v.style.display = '';
-  });
-  // Re-show the active view
+  document.querySelectorAll('#main-app main .view').forEach(v => { if (v.id !== 'view-print-render') v.style.display = ''; });
   const active = document.querySelector('#main-app main .view.active');
   if (active) active.style.display = 'block';
 }
@@ -3006,22 +2546,21 @@ function triggerPrint(sections) {
 function renderPrintPreview() {
   const hasPairings = (state.pendingPairings||[]).length > 0;
   const elNode = el('print-preview-summary');
-  if (!el) return;
+  if (!elNode) return;
   elNode.innerHTML = [
     `<span>☩</span> <strong>Cover Page</strong> — always included`,
     el('pc-phases')?.checked    ? `<span>☩</span> Phase Summary (${state.numPhases} phase${state.numPhases!==1?'s':''})` : null,
-    el('pc-rosters')?.checked   ? `<span>☩</span> Rosters (${state.alliances.length} alliance${state.alliances.length!==1?'s':''},  ${state.players.length} players)` : null,
+    el('pc-rosters')?.checked   ? `<span>☩</span> Rosters (${state.alliances.length} alliance${state.alliances.length!==1?'s':''}, ${state.players.length} players)` : null,
     el('pc-standings')?.checked ? `<span>☩</span> Individual Standings (${state.players.length} players)` : null,
     el('pc-pairings')?.checked  ? `<span>☩</span> Current Pairings — ${
       state.teamMode
         ? ((state.pendingTeamPairings||[]).length > 0 ? `Round ${state.currentRound}, ${state.pendingTeamPairings.length} team matches` : 'none generated yet')
         : (hasPairings ? `Round ${state.currentRound}, ${state.pendingPairings.length} matches` : 'none generated yet')
     }` : null,
-    el('pc-history')?.checked   ? `<span>☩</span> Match History (${state.matches.filter(m=>!m.isBye).length} matches, ${[...new Set(state.matches.filter(m=>!m.isBye).map(m=>m.round))].length} rounds)` : null,
+    el('pc-history')?.checked    ? `<span>☩</span> Match History (${state.matches.filter(m=>!m.isBye).length} matches, ${[...new Set(state.matches.filter(m=>!m.isBye).map(m=>m.round))].length} rounds)` : null,
     el('pc-scoresheet')?.checked ? `<span>☩</span> Round Scoresheet (${state.numPhases * getRoundsPerPhase()} rounds, ${Math.floor(state.players.length/2)+1} rows each)` : null,
   ].filter(Boolean).join('<br>');
 }
-
 
 function toast(msg) {
   const elNode = el('toast');
